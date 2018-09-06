@@ -15,7 +15,6 @@
  */
 package org.dataconservancy.pass.notification.model.config.template;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.AbstractJacksonMappingTest;
 import org.junit.Test;
@@ -35,7 +34,7 @@ public class TemplatePrototypeTest extends AbstractJacksonMappingTest {
     private final String TEMPLATE_JSON = "" +
             "{\n" +
             "        \"notification\": \"SUBMISSION_APPROVAL_INVITE\",\n" +
-            "        \"bodies\": {\n" +
+            "        \"refs\": {\n" +
             "          \"SUBJECT\": \"PASS Submission Approval: ${RESOURCE_METADATA.title}\",\n" +
             "          \"BODY\": \"classpath*:pass-body-submission-approval-invite-template.vm\",\n" +
             "          \"FOOTER\": \"classpath*:pass-footer-template.vm\"\n" +
@@ -47,10 +46,10 @@ public class TemplatePrototypeTest extends AbstractJacksonMappingTest {
         TemplatePrototype template = mapper.readValue(TEMPLATE_JSON, TemplatePrototype.class);
 //        mapper.writer(SerializationFeature.INDENT_OUTPUT).writeValue(System.err, template);
         assertEquals(Notification.Type.SUBMISSION_APPROVAL_INVITE, template.getNotificationType());
-        assertEquals(3, template.getBodies().size());
-        assertEquals("PASS Submission Approval: ${RESOURCE_METADATA.title}", template.getBodies().get(SUBJECT));
-        assertEquals("classpath*:pass-body-submission-approval-invite-template.vm", template.getBodies().get(BODY));
-        assertEquals("classpath*:pass-footer-template.vm", template.getBodies().get(FOOTER));
+        assertEquals(3, template.getRefs().size());
+        assertEquals("PASS Submission Approval: ${RESOURCE_METADATA.title}", template.getRefs().get(SUBJECT));
+        assertEquals("classpath*:pass-body-submission-approval-invite-template.vm", template.getRefs().get(BODY));
+        assertEquals("classpath*:pass-footer-template.vm", template.getRefs().get(FOOTER));
         assertRoundTrip(template, TemplatePrototype.class);
     }
 }

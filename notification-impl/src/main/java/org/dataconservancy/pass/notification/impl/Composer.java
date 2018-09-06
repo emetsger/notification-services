@@ -15,6 +15,8 @@
  */
 package org.dataconservancy.pass.notification.impl;
 
+import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.SimpleNotification;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
@@ -33,9 +35,24 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toSet;
 
 /**
+ * Composes a {@link Notification} from a {@link SubmissionEvent} and its corresponding {@link Submission}, according
+ * to a {@link RecipientConfig}.  Responsible for determining the type of notification, and who the recipients and
+ * sender of the notification are.  It is also responsible for populating other parameters of the notification such as
+ * resource metadata, link metadata, or event metadata.
+ * <p>
+ * The implementation applies a whitelist to the recipients of the notification according to the recipient
+ * configuration.  If the recipient configuration has a null or empty whitelist, that means that *all* recipients are
+ * whitelisted (each recipient will receive the notification).  If the recipient configuration has a non-empty
+ * whitelist, then only those users specified in the whitelist will receive a notification.  (N.B. the global CC field
+ * of the recipient configuration is not run through the whitelist).
+ * </p>
+ *
  * @author Elliot Metsger (emetsger@jhu.edu)
+ * @see RecipientConfig
+ * @see Notification.Type
+ * @see Notification.Param
  */
-public class Composer implements BiFunction<NotificationSubmission, NotificationSubmissionEvent, Notification> {
+public class Composer implements BiFunction<Submission, SubmissionEvent, Notification> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Composer.class);
 
@@ -55,8 +72,24 @@ public class Composer implements BiFunction<NotificationSubmission, Notification
                         new RuntimeException("Missing recipient configuration for Mode '" + config.getMode() + "'"));
     }
 
+    /**
+     * Composes a {@code Notification} from a {@code Submission} and {@code SubmissionEvent}.
+     *
+     * @param submission
+     * @param event
+     * @return
+     */
     @Override
-    public Notification apply(NotificationSubmission submission, NotificationSubmissionEvent event) {
+    public Notification apply(Submission submission, SubmissionEvent event) {
+        Objects.requireNonNull(submission, "Submission must not be null.");
+        Objects.requireNonNull(event, "Event must not be null.");
+
+        if (!event.getSubmission().equals(submission.getId())) {
+            // TODO: exception?
+            LOG.warn("Composing a Notification for tuple [{},{}] but {} references a different Submission: {}.",
+                    submission.getId(), event.getId(), event.getId(), event.getSubmission());
+        }
+
         SimpleNotification notification = new SimpleNotification();
         HashMap<Notification.Param, String> params = new HashMap<>();
         notification.setParameters(params);
@@ -78,7 +111,7 @@ public class Composer implements BiFunction<NotificationSubmission, Notification
         params.put(Notification.Param.FROM, from);
 
         switch (event.getEventType()) {
-            case approval_requested_newuser: {
+            case APPROVAL_REQUESTED_NEWUSER: {
                 notification.setType(Notification.Type.SUBMISSION_APPROVAL_INVITE);
                 // to: submission.getSubmitter() // the AS
                 Collection<String> whitelistedRecipient =
@@ -89,7 +122,7 @@ public class Composer implements BiFunction<NotificationSubmission, Notification
                 break;
             }
 
-            case approval_requested: {
+            case APPROVAL_REQUESTED: {
                 notification.setType(Notification.Type.SUBMISSION_APPROVAL_REQUESTED);
                 // to: submission.getSubmitter() // the AS
                 Collection<String> whitelistedRecipient =
@@ -100,7 +133,7 @@ public class Composer implements BiFunction<NotificationSubmission, Notification
                 break;
             }
 
-            case changes_requested: {
+            case CHANGES_REQUESTED: {
                 notification.setType(Notification.Type.SUBMISSION_CHANGES_REQUESTED);
                 // to: submission.preparers
                 Collection<String> preparersAsStrings =
@@ -111,7 +144,7 @@ public class Composer implements BiFunction<NotificationSubmission, Notification
                 break;
             }
 
-            case submitted: {
+            case SUBMITTED: {
                 notification.setType(Notification.Type.SUBMISSION_SUBMISSION_SUBMITTED);
                 // to: submission.preparers
                 Collection<String> preparersAsStrings = whitelist.apply(
@@ -122,7 +155,7 @@ public class Composer implements BiFunction<NotificationSubmission, Notification
                 break;
             }
 
-            case cancelled: {
+            case CANCELLED: {
                 notification.setType(Notification.Type.SUBMISSION_SUBMISSION_CANCELLED);
                 String performedBy = event.getPerformedBy().toString();
                 Collection<String> recipients;

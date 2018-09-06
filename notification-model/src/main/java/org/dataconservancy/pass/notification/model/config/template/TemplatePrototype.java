@@ -27,7 +27,7 @@ import java.util.Objects;
  */
 public class TemplatePrototype {
 
-    enum Name {
+    public enum Name {
 
         SUBJECT("subject"),
         BODY("body"),
@@ -48,7 +48,7 @@ public class TemplatePrototype {
     /**
      * Inline bodies or a URI to the bodies
      */
-    private Map<Name, String> bodies = new HashMap<>(Name.values().length);
+    private Map<Name, String> refs = new HashMap<>(Name.values().length);
 
     /**
      * The type of notification this template is associated with
@@ -56,16 +56,16 @@ public class TemplatePrototype {
     @JsonProperty("notification")
     private Notification.Type notificationType;
 
-    public Map<Name, String> getBodies() {
-        return bodies;
+    public Map<Name, String> getRefs() {
+        return refs;
     }
 
-    public void setBodies(Map<Name, String> bodies) {
-        this.bodies = bodies;
+    public void setRefs(Map<Name, String> refs) {
+        this.refs = refs;
     }
 
     public void addBody(Name name, String body) {
-        bodies.put(name, body);
+        refs.put(name, body);
     }
 
     public Notification.Type getNotificationType() {
@@ -83,19 +83,19 @@ public class TemplatePrototype {
         if (o == null || getClass() != o.getClass())
             return false;
         TemplatePrototype that = (TemplatePrototype) o;
-        return Objects.equals(bodies, that.bodies) &&
+        return Objects.equals(refs, that.refs) &&
                 notificationType == that.notificationType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(bodies, notificationType);
+        return Objects.hash(refs, notificationType);
     }
 
     @Override
     public String toString() {
         return "TemplatePrototype{" +
-                "bodies=" + bodies +
+                "bodies=" + refs +
                 ", notificationType=" + notificationType +
                 '}';
     }

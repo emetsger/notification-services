@@ -22,9 +22,12 @@ import java.util.Collections;
 import java.util.Objects;
 
 /**
- * Allows recipients of a notification to be overridden depending on the Notification Service mode.
+ * Allows recipients of a notification to be configured depending on the Notification Service {@link #mode mode}.
+ * Each Notification Service mode can have its own RecipientConfig, which can be used to control the dispatch of
+ * notifications to users during testing.
  *
  * @author Elliot Metsger (emetsger@jhu.edu)
+ * @see Mode
  */
 public class RecipientConfig {
 

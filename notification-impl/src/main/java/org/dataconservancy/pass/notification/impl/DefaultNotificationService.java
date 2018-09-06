@@ -16,6 +16,8 @@
 package org.dataconservancy.pass.notification.impl;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.notification.dispatch.DispatchService;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.slf4j.Logger;
@@ -44,10 +46,10 @@ public class DefaultNotificationService implements NotificationService {
     public void notify(String eventUri) {
 
         // Retrieve SubmissionEvent
-        NotificationSubmissionEvent event = passClient.readResource(URI.create(eventUri), NotificationSubmissionEvent.class);
+        SubmissionEvent event = passClient.readResource(URI.create(eventUri), SubmissionEvent.class);
 
         // Retrieve Submission
-        NotificationSubmission submission = passClient.readResource(event.getSubmissionUri(), NotificationSubmission.class);
+        Submission submission = passClient.readResource(event.getSubmission(), Submission.class);
 
         // Compose Notification
         Notification notification = composer.apply(submission, event);

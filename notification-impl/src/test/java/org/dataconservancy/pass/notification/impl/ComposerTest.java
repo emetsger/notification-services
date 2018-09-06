@@ -15,7 +15,13 @@
  */
 package org.dataconservancy.pass.notification.impl;
 
-import org.dataconservancy.pass.notification.impl.NotificationSubmissionEvent.Event;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.apache.commons.text.StringEscapeUtils;
+import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.SubmissionEvent;
+import org.dataconservancy.pass.model.SubmissionEvent.EventType;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.Notification.Param;
 import org.dataconservancy.pass.notification.model.config.Mode;
@@ -24,16 +30,16 @@ import org.dataconservancy.pass.notification.model.config.RecipientConfig;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
-import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -73,7 +79,7 @@ public class ComposerTest {
         // all recipients are whitelisted
         when(whitelister.apply(any())).thenAnswer(inv -> inv.getArgument(0));
         when(notificationConfig.getMode()).thenReturn(runtimeMode);
-        when(notificationConfig.getRecipientConfigs()).thenReturn(Collections.singletonList(recipientConfig));
+        when(notificationConfig.getRecipientConfigs()).thenReturn(singletonList(recipientConfig));
 
         underTest = new Composer(notificationConfig, whitelister);
     }
@@ -84,18 +90,19 @@ public class ComposerTest {
      */
     @Test
     public void approvalRequestedNewUser() {
-        NotificationSubmissionEvent event = new NotificationSubmissionEvent();
+        SubmissionEvent event = new SubmissionEvent();
         URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
-        event.setEventType(Event.approval_requested_newuser);
+        event.setEventType(EventType.APPROVAL_REQUESTED_NEWUSER);
         event.setId(eventUri);
 
-        NotificationSubmission submission = new NotificationSubmission();
+        Submission submission = new Submission();
         URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
         String userUri = "mailto:jane_professor@jhu.edu";
         URI mailtoUri = URI.create(userUri);
         submission.setMetadata(METADATA_JSON_BLOB);
         submission.setId(submissionUri);
         submission.setSubmitter(mailtoUri);
+        event.setSubmission(submissionUri);
 
         Notification notification = underTest.apply(submission, event);
 
@@ -117,18 +124,19 @@ public class ComposerTest {
 
     @Test
     public void approvalRequested() {
-        NotificationSubmissionEvent event = new NotificationSubmissionEvent();
+        SubmissionEvent event = new SubmissionEvent();
         URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
-        event.setEventType(Event.approval_requested);
+        event.setEventType(EventType.APPROVAL_REQUESTED);
         event.setId(eventUri);
 
-        NotificationSubmission submission = new NotificationSubmission();
+        Submission submission = new Submission();
         URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
         String userUri = "http://pass.jhu.edu/fcrepo/users/abc123";
         URI mailtoUri = URI.create(userUri);
         submission.setMetadata(METADATA_JSON_BLOB);
         submission.setId(submissionUri);
         submission.setSubmitter(mailtoUri);
+        event.setSubmission(submissionUri);
 
         Notification notification = underTest.apply(submission, event);
 
@@ -150,17 +158,18 @@ public class ComposerTest {
 
     @Test
     public void changesRequested() {
-        NotificationSubmissionEvent event = new NotificationSubmissionEvent();
+        SubmissionEvent event = new SubmissionEvent();
         URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
-        event.setEventType(Event.changes_requested);
+        event.setEventType(EventType.CHANGES_REQUESTED);
         event.setId(eventUri);
 
-        NotificationSubmission submission = new NotificationSubmission();
+        Submission submission = new Submission();
         URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
         String preparersUri = "http://pass.jhu.edu/fcrepo/users/abc123";
         submission.setMetadata(METADATA_JSON_BLOB);
         submission.setId(submissionUri);
-        submission.setPreparers(singleton(URI.create(preparersUri)));
+        submission.setPreparers(singletonList(URI.create(preparersUri)));
+        event.setSubmission(submissionUri);
 
         Notification notification = underTest.apply(submission, event);
 
@@ -182,17 +191,18 @@ public class ComposerTest {
 
     @Test
     public void submitted() {
-        NotificationSubmissionEvent event = new NotificationSubmissionEvent();
+        SubmissionEvent event = new SubmissionEvent();
         URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
-        event.setEventType(Event.submitted);
+        event.setEventType(EventType.SUBMITTED);
         event.setId(eventUri);
 
-        NotificationSubmission submission = new NotificationSubmission();
+        Submission submission = new Submission();
         URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
         String preparersUri = "http://pass.jhu.edu/fcrepo/users/abc123";
         submission.setMetadata(METADATA_JSON_BLOB);
         submission.setId(submissionUri);
-        submission.setPreparers(singleton(URI.create(preparersUri)));
+        submission.setPreparers(singletonList(URI.create(preparersUri)));
+        event.setSubmission(submissionUri);
 
         Notification notification = underTest.apply(submission, event);
 
@@ -214,20 +224,21 @@ public class ComposerTest {
 
     @Test
     public void cancelledByPreparer() {
-        NotificationSubmissionEvent event = new NotificationSubmissionEvent();
+        SubmissionEvent event = new SubmissionEvent();
         URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
-        event.setEventType(Event.cancelled);
+        event.setEventType(EventType.CANCELLED);
         event.setId(eventUri);
 
-        NotificationSubmission submission = new NotificationSubmission();
+        Submission submission = new Submission();
         URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
         String preparersUri = "http://pass.jhu.edu/fcrepo/users/abc123";
         String submitterUri = "http://pass.jhu.edu/fcrepo/users/xyz789";
         submission.setMetadata(METADATA_JSON_BLOB);
         submission.setId(submissionUri);
-        submission.setPreparers(singleton(URI.create(preparersUri)));
+        submission.setPreparers(singletonList(URI.create(preparersUri)));
         submission.setSubmitter(URI.create(submitterUri));
         event.setPerformedBy(URI.create(preparersUri));
+        event.setSubmission(submissionUri);
 
         Notification notification = underTest.apply(submission, event);
 
@@ -249,20 +260,21 @@ public class ComposerTest {
 
     @Test
     public void cancelledBySubmitter() {
-        NotificationSubmissionEvent event = new NotificationSubmissionEvent();
+        SubmissionEvent event = new SubmissionEvent();
         URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
-        event.setEventType(Event.cancelled);
+        event.setEventType(EventType.CANCELLED);
         event.setId(eventUri);
 
-        NotificationSubmission submission = new NotificationSubmission();
+        Submission submission = new Submission();
         URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
         String preparersUri = "http://pass.jhu.edu/fcrepo/users/abc123";
         String submitterUri = "http://pass.jhu.edu/fcrepo/users/xyz789";
         submission.setMetadata(METADATA_JSON_BLOB);
         submission.setId(submissionUri);
-        submission.setPreparers(singleton(URI.create(preparersUri)));
+        submission.setPreparers(singletonList(URI.create(preparersUri)));
         submission.setSubmitter(URI.create(submitterUri));
         event.setPerformedBy(URI.create(submitterUri));
+        event.setSubmission(submissionUri);
 
         Notification notification = underTest.apply(submission, event);
 
@@ -280,5 +292,38 @@ public class ComposerTest {
 
         // TODO test event metadata?
         // TODO test links
+    }
+
+    @Test
+    public void jsonMappingOfParams() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        SubmissionEvent event = new SubmissionEvent();
+        URI eventUri = URI.create("uri:" + UUID.randomUUID().toString());
+        event.setEventType(EventType.CANCELLED);
+        event.setId(eventUri);
+
+        Submission submission = new Submission();
+        URI submissionUri = URI.create("uri:" + UUID.randomUUID().toString());
+        String preparersUri = "http://pass.jhu.edu/fcrepo/users/abc123";
+        String submitterUri = "http://pass.jhu.edu/fcrepo/users/xyz789";
+        submission.setMetadata(METADATA_JSON_BLOB);
+        submission.setId(submissionUri);
+        submission.setPreparers(singletonList(URI.create(preparersUri)));
+        submission.setSubmitter(URI.create(submitterUri));
+        event.setPerformedBy(URI.create(submitterUri));
+        event.setSubmission(submissionUri);
+
+        Notification notification = underTest.apply(submission, event);
+
+        System.err.println(notification.getParameters().get(Param.RESOURCE_METADATA));
+
+        notification.getParameters().put(Param.SUBJECT, "Don\'t try \"this\" at home!");
+
+        String escapedOut = StringEscapeUtils.unescapeJson(
+                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(notification.getParameters()));
+
+        System.err.println(escapedOut);
+
+
     }
 }

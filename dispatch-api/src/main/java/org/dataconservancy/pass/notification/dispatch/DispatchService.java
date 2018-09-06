@@ -20,6 +20,10 @@ package org.dataconservancy.pass.notification.dispatch;
 
 import org.dataconservancy.pass.notification.model.Notification;
 
+/**
+ * Primary interface for dispatching notifications to recipients.
+ */
+@FunctionalInterface
 public interface DispatchService {
 
     void dispatch(Notification notification);
