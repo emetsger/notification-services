@@ -28,8 +28,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import static java.lang.String.join;
+import static org.dataconservancy.pass.notification.impl.Composer.RecipientConfigFilter.modeFilter;
 
 /**
  * Composes a {@link Notification} from a {@link SubmissionEvent} and its corresponding {@link Submission}, according
@@ -57,16 +59,21 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
 
     private RecipientAnalyzer recipientAnalyzer;
 
-    public Composer(NotificationConfig config, RecipientAnalyzer analyzer) {
+    public Composer(NotificationConfig config) {
         Objects.requireNonNull(config, "NotificationConfig must not be null.");
-        Objects.requireNonNull(analyzer, "Recipient Analyzer must not be null.");
-
-        this.recipientAnalyzer = analyzer;
 
         recipientConfig = config.getRecipientConfigs().stream()
-                .filter(rc -> config.getMode() == rc.getMode()).findAny()
+                .filter(modeFilter(config)).findAny()
                 .orElseThrow(() ->
                         new RuntimeException("Missing recipient configuration for Mode '" + config.getMode() + "'"));
+
+        recipientAnalyzer = new RecipientAnalyzer(new SimpleWhitelist(recipientConfig));
+    }
+
+    public Composer(NotificationConfig config, RecipientAnalyzer recipientAnalyzer) {
+        this(config);
+        Objects.requireNonNull(config, "RecipientAnalyzer must not be null.");
+        this.recipientAnalyzer = recipientAnalyzer;
     }
 
     /**
@@ -147,5 +154,29 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         }
 
         return notification;
+    }
+
+    RecipientConfig getRecipientConfig() {
+        return recipientConfig;
+    }
+
+    void setRecipientConfig(RecipientConfig recipientConfig) {
+        this.recipientConfig = recipientConfig;
+    }
+
+    RecipientAnalyzer getRecipientAnalyzer() {
+        return recipientAnalyzer;
+    }
+
+    void setRecipientAnalyzer(RecipientAnalyzer recipientAnalyzer) {
+        this.recipientAnalyzer = recipientAnalyzer;
+    }
+
+    static class RecipientConfigFilter {
+
+        static Predicate<RecipientConfig> modeFilter(NotificationConfig config) {
+            return (rc) -> config.getMode() == rc.getMode();
+        }
+
     }
 }

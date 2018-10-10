@@ -16,8 +16,6 @@
 package org.dataconservancy.pass.notification.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.commons.text.StringEscapeUtils;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
@@ -30,6 +28,7 @@ import org.dataconservancy.pass.notification.model.config.RecipientConfig;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
@@ -41,7 +40,11 @@ import java.util.function.Function;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -323,7 +326,37 @@ public class ComposerTest {
                 mapper.writerWithDefaultPrettyPrinter().writeValueAsString(notification.getParameters()));
 
         System.err.println(escapedOut);
+    }
 
+    @Test
+    public void testModeFilter() {
+        RecipientConfig prod = new RecipientConfig();
+        prod.setMode(Mode.PRODUCTION);
 
+        RecipientConfig demo = new RecipientConfig();
+        demo.setMode(Mode.DEMO);
+
+        RecipientConfig disabled = new RecipientConfig();
+        disabled.setMode(Mode.DISABLED);
+
+        NotificationConfig config = new NotificationConfig();
+        config.setRecipientConfigs(Arrays.asList(prod, demo, disabled));
+
+        config.setMode(Mode.PRODUCTION);
+        assertTrue(Composer.RecipientConfigFilter.modeFilter(config).test(prod));
+
+        config.setMode(Mode.DEMO);
+        assertTrue(Composer.RecipientConfigFilter.modeFilter(config).test(demo));
+
+        config.setMode(Mode.DISABLED);
+        assertTrue(Composer.RecipientConfigFilter.modeFilter(config).test(disabled));
+
+        assertFalse(Composer.RecipientConfigFilter.modeFilter(config).test(demo));
+        assertFalse(Composer.RecipientConfigFilter.modeFilter(config).test(prod));
+
+        config.setMode(Mode.PRODUCTION);
+        config.setRecipientConfigs(Arrays.asList(prod, demo));
+
+        assertFalse(Composer.RecipientConfigFilter.modeFilter(config).test(disabled));
     }
 }

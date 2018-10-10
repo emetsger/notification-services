@@ -37,13 +37,13 @@ import static java.util.stream.Collectors.toSet;
  *
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
-class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent, Collection<String>> {
+public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent, Collection<String>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecipientAnalyzer.class);
 
     private Function<Collection<String>, Collection<String>> whitelist;
 
-    RecipientAnalyzer(Function<Collection<String>, Collection<String>> whitelist) {
+    public RecipientAnalyzer(Function<Collection<String>, Collection<String>> whitelist) {
         this.whitelist = whitelist;
     }
 

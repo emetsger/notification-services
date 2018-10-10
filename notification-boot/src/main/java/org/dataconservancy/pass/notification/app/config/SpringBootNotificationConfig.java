@@ -16,6 +16,8 @@
 package org.dataconservancy.pass.notification.app.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.util.EnumResolver;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.helper.ConditionalHelpers;
 import org.dataconservancy.pass.client.PassClient;
@@ -27,10 +29,13 @@ import org.dataconservancy.pass.notification.dispatch.impl.email.InlineTemplateR
 import org.dataconservancy.pass.notification.dispatch.impl.email.SpringUriTemplateResolver;
 import org.dataconservancy.pass.notification.dispatch.impl.email.TemplateParameterizer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.TemplateResolver;
-import org.dataconservancy.pass.notification.model.Notification;
+import org.dataconservancy.pass.notification.impl.Composer;
+import org.dataconservancy.pass.notification.impl.RecipientAnalyzer;
+import org.dataconservancy.pass.notification.impl.SimpleWhitelist;
+import org.dataconservancy.pass.notification.model.config.Mode;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
+import org.dataconservancy.pass.notification.model.config.RecipientConfig;
 import org.simplejavamail.mailer.Mailer;
-import org.simplejavamail.mailer.MailerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,10 +43,13 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.function.Function;
 
 import static org.mockito.Mockito.mock;
 
@@ -83,8 +91,25 @@ public class SpringBootNotificationConfig {
     }
 
     @Bean
-    public NotificationConfig notificationConfig(ObjectMapper objectMapper) throws IOException {
-        return objectMapper.readValue(notificationConfiguration.getInputStream(), NotificationConfig.class);
+    public ObjectMapper springEnvObjectMapper(Environment env) {
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+
+        SpringEnvStringDeserializer envDeserializer = new SpringEnvStringDeserializer(env);
+        SpringEnvModeDeserializer enumDeserializer = new SpringEnvModeDeserializer(env);
+
+        module.addDeserializer(String.class, envDeserializer);
+
+        module.addDeserializer(Mode.class, enumDeserializer);
+        mapper.registerModule(module);
+
+        return mapper;
+    }
+
+    @Bean
+    public NotificationConfig notificationConfig(ObjectMapper springEnvObjectMapper) throws IOException {
+        return springEnvObjectMapper
+                .readValue(notificationConfiguration.getInputStream(), NotificationConfig.class);
     }
 
     @Bean
@@ -163,5 +188,24 @@ public class SpringBootNotificationConfig {
         return mock(Mailer.class);
     }
 
+    @Bean
+    public SimpleWhitelist simpleWhitelist(NotificationConfig config) {
+        RecipientConfig recipientConfig = config.getRecipientConfigs().stream()
+                .filter(rc -> config.getMode() == rc.getMode()).findAny()
+                .orElseThrow(() ->
+                        new RuntimeException("Missing recipient configuration for Mode '" + config.getMode() + "'"));
+
+        return new SimpleWhitelist(recipientConfig);
+    }
+
+    @Bean
+    public RecipientAnalyzer recipientAnalyzer(Function<Collection<String>, Collection<String>> simpleWhitelist) {
+        return new RecipientAnalyzer(simpleWhitelist);
+    }
+
+    @Bean
+    public Composer composer(NotificationConfig notificationConfig, RecipientAnalyzer recipientAnalyzer) {
+        return new Composer(notificationConfig, recipientAnalyzer);
+    }
 
 }

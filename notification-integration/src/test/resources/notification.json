@@ -1,8 +1,9 @@
 {
-  "mode": "DEMO",
+  "mode": "${pass.notification.mode}",
   "recipient-config": [
     {
       "mode": "DEMO",
+      "fromAddress": "demo-pass@jhu.edu",
       "global_cc": [
         "demo@pass.jhu.edu"
       ],
