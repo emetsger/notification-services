@@ -142,8 +142,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
             }
 
             default: {
-                LOG.warn("Unhandled SubmissionEvent type {}", event.getEventType());
-                return null;
+                throw new RuntimeException("Unknown SubmissionEvent type '" + event.getEventType() + "'");
             }
         }
 
