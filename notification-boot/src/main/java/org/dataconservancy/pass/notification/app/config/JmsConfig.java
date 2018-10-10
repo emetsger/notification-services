@@ -18,7 +18,6 @@
 
 package org.dataconservancy.pass.notification.app.config;
 
-import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.notification.impl.NotificationService;
 import org.dataconservancy.pass.notification.model.config.Mode;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
@@ -28,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListener;
@@ -42,6 +40,16 @@ import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
+/**
+ * JMS configuration for Notification Services.  Primary entry point to the Notification Services stack when in
+ * production.
+ * <p>
+ * If {@link Mode} is equal to {@link Mode#DISABLED}, then Notification Services will drain any JMS messages in the
+ * queue, and acknowledge (and immediately discard) any new messages it receives.
+ * </p>
+ *
+ * @author Elliot Metsger (emetsger@jhu.edu)
+ */
 @EnableJms
 public class JmsConfig {
 
@@ -49,9 +57,6 @@ public class JmsConfig {
 
     @Autowired
     private JsonParser jsonParser;
-
-    @Autowired
-    private PassClient passClient;
 
     @Autowired
     private NotificationService notificationService;
@@ -78,9 +83,7 @@ public class JmsConfig {
     @JmsListener(destination = "${pass.notification.queue.event.name}", containerFactory = "jmsListenerContainerFactory")
     public void processMessage(@Header(Constants.JmsFcrepoHeader.FCREPO_RESOURCE_TYPE) String resourceType,
                                          @Header(Constants.JmsFcrepoHeader.FCREPO_EVENT_TYPE) String eventType,
-                                         @Header(JmsHeaders.TIMESTAMP) long timeStamp,
                                          @Header(JmsHeaders.MESSAGE_ID) String id,
-                                         Session session,
                                          Message<String> message,
                                          javax.jms.Message jmsMessage) {
 
