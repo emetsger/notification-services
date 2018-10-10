@@ -23,6 +23,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
+ * Filters a list of notification recipients against a whitelist.
+ * <p>
+ * Provided a collection notification recipients, this function will determine which recipients are eligible for receiving the notification (i.e. whitelisted recipients), and return a collection containing the whitelisted addresses.
+ * </p>
+ * <p>
+ * The whitelist is configured in the notification services {@link RecipientConfig recipient configuration}.  If the configured whitelist is empty, then all notification recipients are considered to be whitelisted.
+ * </p>
+ * <p>
+ * A practical configuration is to use an empty whitelist in production, but provide a whitelist when performing testing or demonstrations, preventing notifications from being sent to recipients who didn't request them.
+ * </p>
+ *
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 public class SimpleWhitelist implements Function<Collection<String>, Collection<String>> {
