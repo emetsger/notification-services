@@ -81,7 +81,7 @@ public class ComposerTest {
         when(notificationConfig.getMode()).thenReturn(runtimeMode);
         when(notificationConfig.getRecipientConfigs()).thenReturn(singletonList(recipientConfig));
 
-        underTest = new Composer(notificationConfig, whitelister);
+        underTest = new Composer(notificationConfig, new RecipientAnalyzer(whitelister));
     }
 
     /**

@@ -24,15 +24,12 @@ import org.dataconservancy.pass.notification.model.config.RecipientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
-import static java.util.Collections.singleton;
-import static java.util.stream.Collectors.toSet;
+import static java.lang.String.join;
 
 /**
  * Composes a {@link Notification} from a {@link SubmissionEvent} and its corresponding {@link Submission}, according
@@ -58,13 +55,13 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
 
     private RecipientConfig recipientConfig;
 
-    private Function<Collection<String>, Collection<String>> whitelist;
+    private RecipientAnalyzer recipientAnalyzer;
 
-    public Composer(NotificationConfig config, Function<Collection<String>, Collection<String>> whitelist) {
+    public Composer(NotificationConfig config, RecipientAnalyzer analyzer) {
         Objects.requireNonNull(config, "NotificationConfig must not be null.");
-        Objects.requireNonNull(whitelist, "Whitelist must not be null.");
+        Objects.requireNonNull(analyzer, "Recipient Analyzer must not be null.");
 
-        this.whitelist = whitelist;
+        this.recipientAnalyzer = analyzer;
 
         recipientConfig = config.getRecipientConfigs().stream()
                 .filter(rc -> config.getMode() == rc.getMode()).findAny()
@@ -100,7 +97,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         Collection<String> cc = recipientConfig.getGlobalCc();
         if (cc != null && !cc.isEmpty()) {
             notification.setCc(cc);
-            params.put(Notification.Param.CC, String.join(",", cc));
+            params.put(Notification.Param.CC, join(",", cc));
         }
 
         notification.setResourceUri(submission.getId());
@@ -110,64 +107,37 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         notification.setSender(from);
         params.put(Notification.Param.FROM, from);
 
+        Collection<String> recipients = recipientAnalyzer.apply(submission, event);
+        notification.setRecipient(recipients);
+        params.put(Notification.Param.TO, join(",", recipients));
+
         switch (event.getEventType()) {
             case APPROVAL_REQUESTED_NEWUSER: {
                 notification.setType(Notification.Type.SUBMISSION_APPROVAL_INVITE);
-                // to: submission.getSubmitter() // the AS
-                Collection<String> whitelistedRecipient =
-                        whitelist.apply(singleton(submission.getSubmitter().toString()));
-                notification.setRecipient(whitelistedRecipient);
-                params.put(Notification.Param.TO, String.join(",", whitelistedRecipient));
                 // TODO: generate invite link, attach to parameters map
                 break;
             }
 
             case APPROVAL_REQUESTED: {
                 notification.setType(Notification.Type.SUBMISSION_APPROVAL_REQUESTED);
-                // to: submission.getSubmitter() // the AS
-                Collection<String> whitelistedRecipient =
-                        whitelist.apply(singleton(submission.getSubmitter().toString()));
-                notification.setRecipient(whitelistedRecipient);
-                params.put(Notification.Param.TO, String.join(",", whitelistedRecipient));
                 // TODO: generate approval requested link, attach to parameters map
                 break;
             }
 
             case CHANGES_REQUESTED: {
                 notification.setType(Notification.Type.SUBMISSION_CHANGES_REQUESTED);
-                // to: submission.preparers
-                Collection<String> preparersAsStrings =
-                        whitelist.apply(submission.getPreparers().stream().map(URI::toString).collect(toSet()));
-                notification.setRecipient(preparersAsStrings);
-                params.put(Notification.Param.TO, String.join(",", preparersAsStrings));
                 // TODO: generate changes requested link, attach to parameters map
                 break;
             }
 
             case SUBMITTED: {
                 notification.setType(Notification.Type.SUBMISSION_SUBMISSION_SUBMITTED);
-                // to: submission.preparers
-                Collection<String> preparersAsStrings = whitelist.apply(
-                        submission.getPreparers().stream().map(URI::toString).collect(toSet()));
-                notification.setRecipient(preparersAsStrings);
-                params.put(Notification.Param.TO, String.join(",", preparersAsStrings));
                 // TODO: generate submission submitted link, attach to parameters map
                 break;
             }
 
             case CANCELLED: {
                 notification.setType(Notification.Type.SUBMISSION_SUBMISSION_CANCELLED);
-                String performedBy = event.getPerformedBy().toString();
-                Collection<String> recipients;
-                if (submission.getSubmitter().toString().equals(performedBy)) {
-                    recipients =
-                            whitelist.apply(submission.getPreparers().stream().map(URI::toString).collect(toSet()));
-                } else {
-                    recipients =
-                            whitelist.apply(singleton(submission.getSubmitter().toString()));
-                }
-                notification.setRecipient(recipients);
-                params.put(Notification.Param.TO, String.join(",", recipients));
                 break;
             }
 
