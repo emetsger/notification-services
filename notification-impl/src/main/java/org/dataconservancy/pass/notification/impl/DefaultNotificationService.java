@@ -29,14 +29,18 @@ import java.net.URI;
  */
 public class DefaultNotificationService implements NotificationService {
 
-    @Autowired
     private PassClient passClient;
 
-    @Autowired
     private DispatchService dispatchService;
 
-    @Autowired
     private Composer composer;
+
+    @Autowired
+    public DefaultNotificationService(PassClient passClient, DispatchService dispatchService, Composer composer) {
+        this.passClient = passClient;
+        this.dispatchService = dispatchService;
+        this.composer = composer;
+    }
 
     @Override
     public void notify(String eventUri) {
