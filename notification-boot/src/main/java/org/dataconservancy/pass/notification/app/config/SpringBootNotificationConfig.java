@@ -17,15 +17,16 @@ package org.dataconservancy.pass.notification.app.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.util.EnumResolver;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.helper.ConditionalHelpers;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientDefault;
 import org.dataconservancy.pass.notification.dispatch.impl.email.CompositeResolver;
+import org.dataconservancy.pass.notification.dispatch.impl.email.EmailComposer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.EmailDispatchImpl;
 import org.dataconservancy.pass.notification.dispatch.impl.email.HandlebarsParameterizer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.InlineTemplateResolver;
+import org.dataconservancy.pass.notification.dispatch.impl.email.Parameterizer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.SpringUriTemplateResolver;
 import org.dataconservancy.pass.notification.dispatch.impl.email.TemplateParameterizer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.TemplateResolver;
@@ -145,14 +146,22 @@ public class SpringBootNotificationConfig {
     }
 
     @Bean
-    public EmailDispatchImpl emailDispatchService(NotificationConfig config,
-                                                  PassClient passClient,
-                                                  TemplateResolver compositeResolver,
-                                                  TemplateParameterizer templateParameterizer,
-                                                  Mailer mailer) {
+    public EmailComposer emailComposer(PassClient passClient) {
+        return new EmailComposer(passClient);
+    }
 
-        return new EmailDispatchImpl(config, passClient, compositeResolver, templateParameterizer, mailer);
+    @Bean
+    public Parameterizer parameterizer(NotificationConfig config,
+                                       TemplateResolver compositeResolver,
+                                       TemplateParameterizer templateParameterizer) {
+        return new Parameterizer(config, compositeResolver, templateParameterizer);
+    }
 
+    @Bean
+    public EmailDispatchImpl emailDispatchService(Parameterizer parameterizer,
+                                                  Mailer mailer,
+                                                  EmailComposer emailComposer) {
+        return new EmailDispatchImpl(parameterizer, mailer, emailComposer);
     }
 
     @Bean

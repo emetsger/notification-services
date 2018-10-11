@@ -108,7 +108,10 @@ public class EmailDispatchImplTest {
         when(user.getEmail()).thenReturn(userEmail);
         when(passClient.readResource(URI.create(userUri), User.class)).thenReturn(user);
 
-        underTest = new EmailDispatchImpl(config, passClient, templateResolver, templateParameterizer, mailer);
+        Parameterizer parameterizer = new Parameterizer(config, templateResolver, templateParameterizer);
+        EmailComposer composer = new EmailComposer(passClient);
+
+        underTest = new EmailDispatchImpl(parameterizer, mailer, composer);
     }
 
     @Test

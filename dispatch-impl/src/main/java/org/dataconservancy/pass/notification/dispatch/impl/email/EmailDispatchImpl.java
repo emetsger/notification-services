@@ -15,22 +15,15 @@
  */
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
-import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.dispatch.DispatchService;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
 import org.simplejavamail.email.Email;
-import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.Mailer;
 
-import java.io.InputStream;
-import java.net.URI;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import static org.dataconservancy.pass.notification.dispatch.impl.email.RecipientParser.parseRecipientUris;
 
 /**
  * Dispatches {@link Notification}s as email messages.  Email templates are configured by {@link TemplatePrototype}s
@@ -47,71 +40,31 @@ import static org.dataconservancy.pass.notification.dispatch.impl.email.Recipien
  */
 public class EmailDispatchImpl implements DispatchService {
 
-    private NotificationConfig notificationConfig;
-
-    private PassClient passClient;
-
-    private TemplateResolver templateResolver;
-
-    private TemplateParameterizer parameterizer;
+    private Parameterizer parameterizer;
 
     private Mailer mailer;
 
-    public EmailDispatchImpl(NotificationConfig notificationConfig, PassClient passClient,
-                             TemplateResolver templateResolver,
-                             TemplateParameterizer parameterizer, Mailer mailer) {
-        this.notificationConfig = notificationConfig;
-        this.passClient = passClient;
-        this.templateResolver = templateResolver;
+    private EmailComposer composer;
+
+    public EmailDispatchImpl(Parameterizer parameterizer, Mailer mailer, EmailComposer composer) {
         this.parameterizer = parameterizer;
         this.mailer = mailer;
+        this.composer = composer;
     }
 
     @Override
     public void dispatch(Notification notification) {
-
-        Notification.Type notificationType = notification.getType();
-
-        // resolve templates for subject, body, footer based on notification type
-
-        TemplatePrototype template = notificationConfig.getTemplates().stream()
-                .filter(candidate -> candidate.getNotificationType() == notificationType)
-                .findAny()
-                .orElseThrow(() ->
-                        new DispatchException("Missing notification template for mode '" + notificationType + "'",
-                                notification));
-
         try {
-            Map<TemplatePrototype.Name, InputStream> templates =
-                template.getRefs()
-                        .entrySet()
-                        .stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey,
-                                entry -> templateResolver.resolve(entry.getKey(), entry.getValue())));
+            Notification.Type notificationType = notification.getType();
 
-            // perform pararmeterization on all templates
+            // resolve templates for subject, body, footer based on notification type
 
-            Map<TemplatePrototype.Name, String> parameterized =
-                    templates.entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey,
-                            entry -> parameterizer.parameterize(
-                                    entry.getKey(), notification.getParameters(), entry.getValue())));
+            Map<TemplatePrototype.Name, String> parameterizedTemplates = parameterizer.
+                    resolveAndParameterize(notification, notificationType);
 
             // compose email
 
-            String emailToAddress = String.join(",", parseRecipientUris(notification.getRecipients()
-                    .stream().map(URI::create).collect(Collectors.toSet()), passClient));
-
-            Email email = EmailBuilder.startingBlank()
-                    .from(notification.getSender())
-                    .to(emailToAddress)
-                    .cc(String.join(",", notification.getCc()))
-                    .withSubject(parameterized.getOrDefault(TemplatePrototype.Name.SUBJECT, ""))
-                    .withPlainText(String.join("\n\n",
-                            parameterized.getOrDefault(TemplatePrototype.Name.BODY, ""),
-                            parameterized.getOrDefault(TemplatePrototype.Name.FOOTER, "")))
-                    .buildEmail();
+            Email email = composer.compose(notification, parameterizedTemplates);
 
             // send email
 
