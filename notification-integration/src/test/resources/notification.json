@@ -3,12 +3,12 @@
   "recipient-config": [
     {
       "mode": "DEMO",
-      "fromAddress": "demo-pass@jhu.edu",
+      "fromAddress": "demo-pass@mail.local.domain",
       "global_cc": [
-        "demo@pass.jhu.edu"
+        "demo@mail.local.domain"
       ],
       "whitelist": [
-        "emetsger@gmail.com"
+        "emetsger@mail.local.domain"
       ]
     }
   ],
@@ -16,17 +16,49 @@
     {
       "notification": "SUBMISSION_APPROVAL_INVITE",
       "refs": {
-        "SUBJECT": "Subject",
-        "BODY": "Body",
-        "FOOTER": "Footer"
+        "SUBJECT": "Approval Invite Subject",
+        "BODY": "Approval Invite Body",
+        "FOOTER": "Approval Invite Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_APPROVAL_REQUESTED",
+      "refs": {
+        "SUBJECT": "Approval Requested Subject",
+        "BODY": "Approval Requested Body",
+        "FOOTER": "Approval Requested Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_CHANGES_REQUESTED",
+      "refs": {
+        "SUBJECT": "Changes Requested Subject",
+        "BODY": "Changes Requested Body",
+        "FOOTER": "Changes Requested Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_SUBMISSION_SUBMITTED",
+      "refs": {
+        "SUBJECT": "Submission Submitted Subject",
+        "BODY": "Submission Submitted Body",
+        "FOOTER": "Submission Submitted Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_SUBMISSION_CANCELLED",
+      "refs": {
+        "SUBJECT": "Submission Cancelled Subject",
+        "BODY": "Submission Cancelled Body",
+        "FOOTER": "Submission Cancelled Footer"
       }
     }
   ],
   "smtp": {
-    "host": "smtp.gmail.com",
-    "port": "587",
-    "smtpUser": "foo",
-    "smtpPassword": "bar"
+    "host": "${pass.notification.smtp.host}",
+    "port": "${pass.notification.smtp.port}",
+    "smtpUser": "${pass.notification.smtp.user}",
+    "smtpPassword": "${pass.notification.smtp.pass}"
   },
   "user-token-generator": {
     "key": "BETKPFHWGGDIEWIIYKYQ33LUS4"

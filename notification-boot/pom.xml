@@ -125,10 +125,10 @@
         <version>${project.parent.version}</version>
       </dependency>
 
-      <!-- TODO: Remove (used to temporarily mock objects in Spring config) -->
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
+        <scope>test</scope>
       </dependency>
 
     </dependencies>

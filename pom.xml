@@ -97,11 +97,13 @@
         <messaging-support.verison>0.0.1-2.3-SNAPSHOT</messaging-support.verison>
         <handlebars.version>4.1.0</handlebars.version>
         <simple-javamail.version>5.0.3</simple-javamail.version>
+        <javamail.version>1.6.2</javamail.version>
         <aspectjrt.version>1.9.1</aspectjrt.version>
 
         <docker.fcrepo.version>oapass/fcrepo:4.7.5-2.3-SNAPSHOT</docker.fcrepo.version>
         <docker.indexer.version>oapass/indexer:0.0.13-2.3-SNAPSHOT</docker.indexer.version>
         <docker.elasticsearch.version>docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3</docker.elasticsearch.version>
+        <docker.tvial.docker-mailserver.version>oapass/docker-mailserver:latest</docker.tvial.docker-mailserver.version>
 
         <pass.jsonld.context>https://oa-pass.github.io/pass-data-model/src/main/resources/context-2.3.jsonld</pass.jsonld.context>
 
@@ -518,6 +520,12 @@
                 <groupId>org.aspectj</groupId>
                 <artifactId>aspectjrt</artifactId>
                 <version>${aspectjrt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${javamail.version}</version>
             </dependency>
 
         </dependencies>

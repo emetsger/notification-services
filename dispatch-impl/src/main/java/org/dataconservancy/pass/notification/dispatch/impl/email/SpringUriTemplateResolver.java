@@ -16,6 +16,8 @@
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
 import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.UrlResource;
@@ -31,10 +33,17 @@ import static java.lang.String.format;
  */
 public class SpringUriTemplateResolver implements TemplateResolver {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SpringUriTemplateResolver.class);
+
     @Override
     public InputStream resolve(TemplatePrototype.Name name, String template) {
 
-        URI.create(template);
+        try {
+            URI.create(template);
+        } catch (Exception e) {
+            // not a URI.
+            return null;
+        }
 
         int semiColonIdx = template.indexOf(":");
 
@@ -47,9 +56,16 @@ public class SpringUriTemplateResolver implements TemplateResolver {
                 // TODO handle authenticated endpoints; cf. deposit services for impl
                 return new UrlResource(template).getInputStream();
             }
+        } catch (IOException e) {
+            String msg = format("Error resolving template name '%s', '%s' as a Spring Resource: %s",
+                    name, template, e.getMessage());
+            throw new RuntimeException(msg, e);
+        }
 
-            // assume file
 
+        // assume file
+
+        try {
             return new FileSystemResource(template).getInputStream();
         } catch (IOException e) {
             String msg = format("Error resolving template name '%s', '%s' as a Spring Resource: %s",

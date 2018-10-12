@@ -41,7 +41,7 @@ public class LoggingAspect {
 
     private static final Logger NOTIFICATION_LOG = LoggerFactory.getLogger("NOTIFICATION_LOG");
 
-    @Pointcut("execution(public void org.dataconservancy.pass.notification.dispatch.DispatchService.dispatch(..))")
+    @Pointcut("execution(public * org.dataconservancy.pass.notification.dispatch.DispatchService.dispatch(..))")
     void dispatchApiMethod() {}
 
     @Before("dispatchApiMethod()")

@@ -21,8 +21,12 @@ import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -63,6 +67,6 @@ public class Parameterizer {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> parameterizer.parameterize(
-                                entry.getKey(), notification.getParameters(), entry.getValue())));
+                                entry.getKey(), ofNullable(notification.getParameters()).orElseGet(Collections::emptyMap), entry.getValue())));
     }
 }

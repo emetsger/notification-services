@@ -26,6 +26,6 @@ import org.dataconservancy.pass.notification.model.Notification;
 @FunctionalInterface
 public interface DispatchService {
 
-    void dispatch(Notification notification);
+    String dispatch(Notification notification);
 
 }

@@ -36,7 +36,10 @@ import org.dataconservancy.pass.notification.impl.SimpleWhitelist;
 import org.dataconservancy.pass.notification.model.config.Mode;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.notification.model.config.RecipientConfig;
+import org.dataconservancy.pass.notification.model.config.smtp.SmtpServerConfig;
 import org.simplejavamail.mailer.Mailer;
+import org.simplejavamail.mailer.MailerBuilder;
+import org.simplejavamail.mailer.config.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,9 +53,8 @@ import org.springframework.core.io.Resource;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Function;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Primary Spring Boot configuration class for Notification Services
@@ -84,6 +86,9 @@ public class SpringBootNotificationConfig {
 
     @Value("${pass.notification.configuration}")
     private Resource notificationConfiguration;
+
+    @Value("${pass.notification.mailer.debug}")
+    private boolean mailerDebug;
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -177,7 +182,7 @@ public class SpringBootNotificationConfig {
     @Bean
     public CompositeResolver compositeResolver(InlineTemplateResolver inlineTemplateResolver,
                                                SpringUriTemplateResolver springUriTemplateResolver) {
-        return new CompositeResolver(Arrays.asList(inlineTemplateResolver, springUriTemplateResolver));
+        return new CompositeResolver(Arrays.asList(springUriTemplateResolver, inlineTemplateResolver));
     }
 
     @Bean
@@ -193,8 +198,17 @@ public class SpringBootNotificationConfig {
     }
 
     @Bean
-    public Mailer mailer() {
-        return mock(Mailer.class);
+    public Mailer mailer(NotificationConfig config) {
+        SmtpServerConfig smtpConfig = config.getSmtpConfig();
+        Objects.requireNonNull(smtpConfig, "Missing SMTP server configuration from '" + notificationConfiguration + "'");
+        Mailer mailer = MailerBuilder
+                .withSMTPServerHost(smtpConfig.getHost())
+                .withSMTPServerPort(Integer.parseInt(smtpConfig.getPort()))
+                .withTransportStrategy(TransportStrategy.SMTP) // TODO fixme
+                .withDebugLogging(mailerDebug)
+                .buildMailer();
+
+        return mailer;
     }
 
     @Bean

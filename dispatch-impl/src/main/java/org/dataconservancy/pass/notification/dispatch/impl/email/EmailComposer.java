@@ -16,10 +16,12 @@
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
 import org.simplejavamail.email.Email;
 import org.simplejavamail.email.EmailBuilder;
+import org.simplejavamail.email.EmailPopulatingBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
@@ -44,15 +46,28 @@ public class EmailComposer {
         String emailToAddress = String.join(",", parseRecipientUris(n.getRecipients()
                 .stream().map(URI::create).collect(Collectors.toSet()), passClient));
 
-        return EmailBuilder.startingBlank()
+        if (n.getSender() == null || n.getSender().trim().length() == 0) {
+            throw new DispatchException("Notification must not have a null or empty sender!", n);
+        }
+
+        if (emailToAddress == null || emailToAddress.trim().length() == 0) {
+            throw new DispatchException("Notification must not have a null or empty to address!", n);
+        }
+
+        EmailPopulatingBuilder builder = EmailBuilder.startingBlank()
                 .from(n.getSender())
                 .to(emailToAddress)
-                .cc(String.join(",", n.getCc()))
                 .withSubject(templates.getOrDefault(TemplatePrototype.Name.SUBJECT, ""))
                 .withPlainText(String.join("\n\n",
                         templates.getOrDefault(TemplatePrototype.Name.BODY, ""),
-                        templates.getOrDefault(TemplatePrototype.Name.FOOTER, "")))
-                .buildEmail();
+                        templates.getOrDefault(TemplatePrototype.Name.FOOTER, "")));
+
+        // builder refuses to build the cc with an empty collection
+        if (n.getCc() != null && !n.getCc().isEmpty()) {
+            builder.cc(String.join(",", n.getCc()));
+        }
+
+        return builder.buildEmail();
     }
 
 }

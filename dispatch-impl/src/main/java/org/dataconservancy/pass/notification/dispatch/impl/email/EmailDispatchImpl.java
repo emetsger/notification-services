@@ -22,6 +22,8 @@ import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
 import org.simplejavamail.email.Email;
 import org.simplejavamail.mailer.Mailer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -40,6 +42,8 @@ import java.util.Map;
  */
 public class EmailDispatchImpl implements DispatchService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(EmailDispatchImpl.class);
+
     private Parameterizer parameterizer;
 
     private Mailer mailer;
@@ -53,7 +57,7 @@ public class EmailDispatchImpl implements DispatchService {
     }
 
     @Override
-    public void dispatch(Notification notification) {
+    public String dispatch(Notification notification) {
         try {
             Notification.Type notificationType = notification.getType();
 
@@ -69,6 +73,10 @@ public class EmailDispatchImpl implements DispatchService {
             // send email
 
             mailer.sendMail(email);
+
+            LOG.trace("Dispatched email with id '{}'", email.getId());
+
+            return email.getId();
         } catch (Exception e) {
             throw new DispatchException(e.getMessage(), e, notification);
         }
