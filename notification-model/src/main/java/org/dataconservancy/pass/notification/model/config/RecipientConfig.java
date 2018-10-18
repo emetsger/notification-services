@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * Allows recipients of a notification to be configured depending on the Notification Service {@link #mode mode}.
  * Each Notification Service mode can have its own RecipientConfig, which can be used to control the dispatch of
- * notifications to users during testing.
+ * notifications to users during testing or production.
  *
  * @author Elliot Metsger (emetsger@jhu.edu)
  * @see Mode
@@ -63,6 +63,15 @@ public class RecipientConfig {
 
     private String fromAddress;
 
+    /**
+     * The Notification Service mode (e.g. "demo", "prod") that this {@code RecipientConfiguration} applies to.
+     * <p>
+     * This configuration is considered active if the mode matches {@link NotificationConfig#getMode() the runtime
+     * mode}.
+     * </p>
+     *
+     * @return the notification services mode this configuration applies to
+     */
     public Mode getMode() {
         return mode;
     }
@@ -71,6 +80,11 @@ public class RecipientConfig {
         this.mode = mode;
     }
 
+    /**
+     * All notifications for {@link #mode} will be sent to these recipients
+     *
+     * @return global recipients for dispatched notifications
+     */
     public Collection<String> getGlobalCc() {
         return globalCc;
     }
@@ -79,6 +93,25 @@ public class RecipientConfig {
         this.globalCc = globalCc;
     }
 
+    /**
+     * Whitelisted recipients for {@link #mode} will receive notifications directly.  If the recipient on the
+     * {@code Notification} matches a recipient on the whitelist, then the notification is delivered.
+     * <p>
+     * If a whitelist does not exist in the configuration, then it is treated as "allow all", or "matching *".  Any
+     * recipient configured on the {@code Notification} will have notifications delivered.  A {@code null} whitelist is
+     * what would be normally desired in production: each recipient will receive notifications.
+     * </p>
+     * <p>
+     * If a whitelist does exist, then the recipient configured on the {@code Notification} will be used <em>only</em>
+     * if they are on the whitelist.  This is a handy mode for demo purposes: only the identified recipients on the
+     * whitelist can receive notifications.
+     * </p>
+     * <p>
+     * In all cases, notifications are also sent to {@link #globalCc}.
+     * </p>
+     *
+     * @return the whitelist
+     */
     public Collection<String> getWhitelist() {
         return whitelist;
     }
@@ -87,6 +120,11 @@ public class RecipientConfig {
         this.whitelist = whitelist;
     }
 
+    /**
+     * All notifications will appear to be delivered from this address
+     *
+     * @return the from address
+     */
     public String getFromAddress() {
         return fromAddress;
     }

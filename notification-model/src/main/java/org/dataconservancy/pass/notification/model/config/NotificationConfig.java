@@ -25,6 +25,15 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * The Notification Services runtime configuration.
+ * <p>
+ * The configuration is parsed from a JSON resource identified by the environment variable or system property {@code pass.notification.configuration}.  The resource must be identified as a Spring Resource URI (e.g. {@code classpath:/notification.json}, {@code file:///notification.json}).
+ * </p>
+ * <p>
+ * 
+ * </p>
+ *
+ * @see <a href="https://docs.spring.io/spring/docs/5.1.1.RELEASE/spring-framework-reference/core.html#resources">Spring Resources</a>
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 public class NotificationConfig {
@@ -32,7 +41,7 @@ public class NotificationConfig {
     /**
      * Runtime mode of Notification Services (e.g. "disabled", "demo", "production")
      */
-    private Mode mode;
+    public Mode mode;
 
     /**
      * Each Notification type has a set of templates
@@ -57,6 +66,14 @@ public class NotificationConfig {
     @JsonProperty("user-token-generator")
     private UserTokenGeneratorConfig tokenConfig;
 
+    /**
+     * The runtime mode of Notification Services.  Portions of the configuration may be differentiated by mode, for example, there can be a {@link RecipientConfig} per {@link Mode}.
+     * <p>
+     * The mode may be set in the configuration file, or set with an environment or system property variable named {@code pass.notification.mode}.
+     * </p>
+     *
+     * @return the runtime mode of Notification Services
+     */
     public Mode getMode() {
         return mode;
     }
@@ -65,6 +82,11 @@ public class NotificationConfig {
         this.mode = mode;
     }
 
+    /**
+     * The email templates used for each {@link Notification#getType() notification type}.
+     *
+     * @return the Collection of email templates, one template per notification type
+     */
     public Collection<TemplatePrototype> getTemplates() {
         return templates;
     }
@@ -73,6 +95,11 @@ public class NotificationConfig {
         this.templates = templates;
     }
 
+    /**
+     * The recipient configuration used for each {@link Mode} of Notification Services.  The active recipient configuration will have a {@link RecipientConfig#getMode() mode} equal to {@link #getMode()}.
+     *
+     * @return the Collection of recipient configurations, one for each supported Notification Services mode
+     */
     public Collection<RecipientConfig> getRecipientConfigs() {
         return recipientConfigs;
     }
@@ -81,6 +108,11 @@ public class NotificationConfig {
         this.recipientConfigs = recipientConfigs;
     }
 
+    /**
+     * The settings used to send email notifications using SMTP.  Unlike other portions of this configuration, it is <em>not</em> a function of {@link #getMode() the runtime mode}.
+     *
+     * @return the global SMTP server configuration
+     */
     public SmtpServerConfig getSmtpConfig() {
         return smtpConfig;
     }

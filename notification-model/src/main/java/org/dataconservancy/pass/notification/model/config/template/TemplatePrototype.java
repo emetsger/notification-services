@@ -23,6 +23,13 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * Allows for the customization of notification subject, body, and footer.  The {@code TemplatePrototype} used is a
+ * function of {@link Notification#getType() notification type}; each notification type has exactly one {@code
+ * TemplatePrototype} used to compose notifications for that type.
+ * <p>
+ * {@code TemplatePrototype}
+ * </p>
+ *
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 public class TemplatePrototype {
