@@ -33,13 +33,16 @@
     <logger name="org.fcrepo.client" additivity="false" level="WARN">
         <appender-ref ref="STDERR"/>
     </logger>
-    <logger name="com.github.jknack.handlebars" additivity="false" level="${com.github.jknack.handlebars.level:-TRACE}">
+    <logger name="com.github.jknack.handlebars" additivity="false" level="${com.github.jknack.handlebars.level:-WARN}">
         <appender-ref ref="STDERR"/>
     </logger>
     <logger name="org.dataconservancy.pass" additivity="false" level="${org.dataconservancy.pass.level:-WARN}">
         <appender-ref ref="STDERR"/>
     </logger>
-    <logger name="org.dataconservancy.pass.notification" additivity="false" level="${org.dataconservancy.pass.notification.level:-TRACE}">
+    <logger name="org.dataconservancy.pass.notification" additivity="false" level="${org.dataconservancy.pass.notification.level:-INFO}">
+        <appender-ref ref="STDERR"/>
+    </logger>
+    <logger name="NOTIFICATION_LOG" additivity="false" level="${org.dataconservancy.pass.notification.level:-INFO}">
         <appender-ref ref="STDERR"/>
     </logger>
     <!-- the rest client is noisy, and detracts from looking at test logging output -->

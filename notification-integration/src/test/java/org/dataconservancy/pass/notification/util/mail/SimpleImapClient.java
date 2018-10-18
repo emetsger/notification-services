@@ -69,7 +69,7 @@ public class SimpleImapClient {
 
         return getFolders().stream().filter(folder -> folder.getName().length() > 0).flatMap(folder -> {
             try {
-                LOG.debug("Opening folder '{}'", folder.getName());
+                LOG.trace("Opening folder '{}'", folder.getName());
                 folder.open(Folder.READ_ONLY);
                 Message[] messages = folder.search(idTerm);
                 if (messages != null && messages.length > 0) {
