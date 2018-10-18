@@ -16,6 +16,8 @@
 package org.dataconservancy.pass.notification.aop.logging;
 
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -53,12 +55,31 @@ public class LoggingAspect {
 
         Notification n = (Notification) args[0];
 
-        NOTIFICATION_LOG.info("Dispatching notification to [{}], cc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
+        NOTIFICATION_LOG.debug("Dispatching notification to [{}], cc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
                 join(",", ofNullable(n.getRecipients()).orElseGet(Collections::emptyList)),
                 join(",", ofNullable(n.getCc()).orElseGet(Collections::emptyList)),
                 n.getType(),
                 n.getEventUri(),
                 n.getResourceUri());
+    }
+
+    @AfterReturning(pointcut = "dispatchApiMethod()", returning = "id")
+    public void logNotificationReturn(JoinPoint jp, String id) {
+        Object[] args = jp.getArgs();
+        if (args == null || args.length == 0) {
+            return;
+        }
+
+        Notification n = (Notification) args[0];
+
+        NOTIFICATION_LOG.info("Successfully dispatched notification with id {} to [{}], cc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
+                id,
+                join(",", ofNullable(n.getRecipients()).orElseGet(Collections::emptyList)),
+                join(",", ofNullable(n.getCc()).orElseGet(Collections::emptyList)),
+                n.getType(),
+                n.getEventUri(),
+                n.getResourceUri());
+
     }
 
     @AfterThrowing(pointcut = "dispatchApiMethod()", throwing = "ex")
