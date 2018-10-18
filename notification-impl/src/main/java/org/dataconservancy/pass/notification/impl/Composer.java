@@ -61,12 +61,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
 
     public Composer(NotificationConfig config) {
         Objects.requireNonNull(config, "NotificationConfig must not be null.");
-
-        recipientConfig = config.getRecipientConfigs().stream()
-                .filter(modeFilter(config)).findAny()
-                .orElseThrow(() ->
-                        new RuntimeException("Missing recipient configuration for Mode '" + config.getMode() + "'"));
-
+        recipientConfig = getRecipientConfig(config);
         recipientAnalyzer = new RecipientAnalyzer(new SimpleWhitelist(recipientConfig));
     }
 
@@ -99,7 +94,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         notification.setParameters(params);
 
         notification.setEventUri(event.getId());
-        params.put(Notification.Param.EVENT_METADATA, "");  // TODO: invoke adapter to produce JSON representation of event?  why not just use the event URI
+        params.put(Notification.Param.EVENT_METADATA, event.getId().toString());  // TODO: invoke adapter to produce JSON representation of event?
 
         Collection<String> cc = recipientConfig.getGlobalCc();
         if (cc != null && !cc.isEmpty()) {
@@ -172,8 +167,20 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         this.recipientAnalyzer = recipientAnalyzer;
     }
 
+    static RecipientConfig getRecipientConfig(NotificationConfig config) {
+        return config.getRecipientConfigs().stream()
+                .filter(modeFilter(config)).findAny()
+                .orElseThrow(() ->
+                        new RuntimeException("Missing recipient configuration for Mode '" + config.getMode() + "'"));
+    }
+
     static class RecipientConfigFilter {
 
+        /**
+         * Selects the correct {@link RecipientConfig} for the current {@link NotificationConfig#mode mode} of Notification Services.
+         * @param config the Notification Services runtime configuration
+         * @return the current mode's {@code RecipientConfig}
+         */
         static Predicate<RecipientConfig> modeFilter(NotificationConfig config) {
             return (rc) -> config.getMode() == rc.getMode();
         }

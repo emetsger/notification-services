@@ -18,6 +18,7 @@
 
 package org.dataconservancy.pass.notification.impl;
 
+import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.notification.app.NotificationApp;
@@ -30,20 +31,34 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.lang.String.join;
+import static java.nio.charset.Charset.forName;
 import static java.util.Collections.singletonList;
+import static org.apache.commons.io.IOUtils.resourceToString;
+import static org.dataconservancy.pass.notification.impl.Composer.getRecipientConfig;
+import static org.dataconservancy.pass.notification.model.Notification.Param.CC;
+import static org.dataconservancy.pass.notification.model.Notification.Param.EVENT_METADATA;
+import static org.dataconservancy.pass.notification.model.Notification.Param.FROM;
+import static org.dataconservancy.pass.notification.model.Notification.Param.RESOURCE_METADATA;
+import static org.dataconservancy.pass.notification.model.Notification.Param.SUBJECT;
+import static org.dataconservancy.pass.notification.model.Notification.Param.TO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -74,6 +89,9 @@ public class ComposerIT {
     @Autowired
     private Composer composer;
 
+    @Autowired
+    private PassClient passClient;
+
     @Before
     public void setUp() throws Exception {
         assertNotNull(composer.getRecipientAnalyzer());
@@ -93,6 +111,7 @@ public class ComposerIT {
      * When composing a Notification with an empty whitelist, every recipient should be present.
      */
     @Test
+    @DirtiesContext
     public void testEmptyWhitelist() {
         RecipientConfig config = composer.getRecipientConfig();
         config.setWhitelist(Collections.emptyList());
@@ -109,6 +128,7 @@ public class ComposerIT {
      * When composing a Notification, the global CC addresses should not be filtered by the whitelist, while the direct recipients are.
      */
     @Test
+    @DirtiesContext
     public void testGlobalCCUnaffectedByWhitelist() {
         RecipientConfig config = composer.getRecipientConfig();
 
@@ -136,9 +156,10 @@ public class ComposerIT {
      * When composing a Notification with a non-empty whitelist, only those whitelisted recipients should be present.
      */
     @Test
+    @DirtiesContext
     public void testWhitelistFilter() {
         Collection<String> allPreparers = preparers;
-        Collection<String> onePreparer = Collections.singletonList(preparer_1);
+        Collection<String> onePreparer = singletonList(preparer_1);
 
         // Configure the whitelist to contain all the preparers
         RecipientConfig config = composer.getRecipientConfig();
@@ -176,6 +197,7 @@ public class ComposerIT {
      * Insure that the proper whitelist is used for the specified mode
      */
     @Test
+    @DirtiesContext
     public void testRecipientConfigForEachMode() {
         // make a unique whitelist and recipient config for each possible mode
         HashMap<Mode, RecipientConfig> rcs = new HashMap<>();
@@ -208,6 +230,7 @@ public class ComposerIT {
     }
 
     @Test
+    @DirtiesContext
     public void testFromForEachMode() {
         // make a unique from address and recipient config for each possible mode
         HashMap<Mode, RecipientConfig> rcs = new HashMap<>();
@@ -231,6 +254,7 @@ public class ComposerIT {
      * Insure the proper global CC addresses are used for the specified mode
      */
     @Test
+    @DirtiesContext
     public void testGlobalCCForEachMode() {
         // make a unique global address and recipient config for each possible mode
         HashMap<Mode, RecipientConfig> rcs = new HashMap<>();
@@ -290,7 +314,46 @@ public class ComposerIT {
 
             assertEquals(expectedMapping.get(eventType), composer.apply(submission, event).getType());
         });
+    }
 
+    /**
+     * Insure that the {@link Notification#getParameters() parameters} are properly populated
+     */
+    @Test
+    public void testNotificationParametersModel() throws IOException {
+        String to = "mailto:emetsger@mail.local.domain";
+        String from = "mailto:preparer@mail.local.domain";
 
+        Submission submission = new Submission();
+        submission.setSubmitter(URI.create(to));
+        URI preparerUri = URI.create(from);
+        submission.setPreparers(singletonList(preparerUri));
+        String metadata = resourceToString(join("/","", packageAsPath(), "submission-metadata.json"), forName("UTF-8"));
+        submission.setMetadata(metadata);
+        submission = passClient.createAndReadResource(submission, Submission.class);
+
+        SubmissionEvent event = new SubmissionEvent();
+        event.setSubmission(submission.getId());
+        event.setEventType(SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+        event.setPerformedBy(preparerUri);
+        event.setComment("Please see if this submission meets your approval.");
+        event = passClient.createAndReadResource(event, SubmissionEvent.class);
+
+        Notification n = composer.apply(submission, event);
+        Map<Notification.Param, String> params = n.getParameters();
+
+        assertEquals(metadata, params.get(RESOURCE_METADATA));
+        // TODO Params map contains URIs of recipients at this point, they've not been resolved to email addresses
+        // TODO Recipient URIs aren't resolved until Dispatch
+        assertEquals(to, params.get(TO));
+        assertEquals(getRecipientConfig(config).getFromAddress(), params.get(FROM));
+        assertEquals(join(",", getRecipientConfig(config).getGlobalCc()), params.get(CC));
+        assertEquals(event.getId().toString(), params.get(EVENT_METADATA));
+        // TODO remove Subject?  Unset at this point, since templates haven't been resolved or parameterized
+        assertNull(params.get(SUBJECT));
+    }
+
+    private static String packageAsPath() {
+        return ComposerIT.class.getPackage().getName().replace('.', '/');
     }
 }
