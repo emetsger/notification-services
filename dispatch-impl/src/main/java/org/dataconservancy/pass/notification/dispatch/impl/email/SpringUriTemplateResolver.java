@@ -15,7 +15,7 @@
  */
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -36,7 +36,7 @@ public class SpringUriTemplateResolver implements TemplateResolver {
     private static final Logger LOG = LoggerFactory.getLogger(SpringUriTemplateResolver.class);
 
     @Override
-    public InputStream resolve(TemplatePrototype.Name name, String template) {
+    public InputStream resolve(NotificationTemplate.Name name, String template) {
 
         try {
             URI.create(template);

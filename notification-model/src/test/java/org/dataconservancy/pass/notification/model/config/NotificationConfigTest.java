@@ -15,9 +15,6 @@
  */
 package org.dataconservancy.pass.notification.model.config;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.dataconservancy.pass.notification.model.Notification;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -88,7 +85,7 @@ public class NotificationConfigTest extends AbstractJacksonMappingTest {
         assertEquals(1, config.getTemplates().size());
         config.getTemplates()
                 .stream().filter(tc -> tc.getNotificationType() == SUBMISSION_APPROVAL_INVITE).findAny()
-                .orElseThrow(() -> new RuntimeException("Missing TemplatePrototype for type SUBMISSION_APPROVAL_INVITE"));
+                .orElseThrow(() -> new RuntimeException("Missing NotificationTemplate for type SUBMISSION_APPROVAL_INVITE"));
         assertNotNull(config.getSmtpConfig());
         assertEquals("smtp.gmail.com", config.getSmtpConfig().getHost());
         assertRoundTrip(config, NotificationConfig.class);

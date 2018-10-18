@@ -18,10 +18,9 @@ package org.dataconservancy.pass.notification.model.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.smtp.SmtpServerConfig;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -30,7 +29,7 @@ import java.util.Objects;
  * The configuration is parsed from a JSON resource identified by the environment variable or system property {@code pass.notification.configuration}.  The resource must be identified as a Spring Resource URI (e.g. {@code classpath:/notification.json}, {@code file:///notification.json}).
  * </p>
  * <p>
- * 
+ *
  * </p>
  *
  * @see <a href="https://docs.spring.io/spring/docs/5.1.1.RELEASE/spring-framework-reference/core.html#resources">Spring Resources</a>
@@ -46,7 +45,7 @@ public class NotificationConfig {
     /**
      * Each Notification type has a set of templates
      */
-    private Collection<TemplatePrototype> templates;
+    private Collection<NotificationTemplate> templates;
 
     /**
      * Each Notification Service mode has a recipientConfig
@@ -87,11 +86,11 @@ public class NotificationConfig {
      *
      * @return the Collection of email templates, one template per notification type
      */
-    public Collection<TemplatePrototype> getTemplates() {
+    public Collection<NotificationTemplate> getTemplates() {
         return templates;
     }
 
-    public void setTemplates(Collection<TemplatePrototype> templates) {
+    public void setTemplates(Collection<NotificationTemplate> templates) {
         this.templates = templates;
     }
 

@@ -23,7 +23,7 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.helper.ConditionalHelpers;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.Notification.Param;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype.Name;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate.Name;
 import org.junit.Before;
 import org.junit.Test;
 

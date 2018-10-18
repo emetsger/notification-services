@@ -18,12 +18,11 @@ package org.dataconservancy.pass.notification.dispatch.impl.email;
 import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -45,8 +44,8 @@ public class Parameterizer {
         this.parameterizer = parameterizer;
     }
 
-    Map<TemplatePrototype.Name, String> resolveAndParameterize(Notification notification, Notification.Type notificationType) {
-        TemplatePrototype template = notificationConfig.getTemplates().stream()
+    Map<NotificationTemplate.Name, String> resolveAndParameterize(Notification notification, Notification.Type notificationType) {
+        NotificationTemplate template = notificationConfig.getTemplates().stream()
                 .filter(candidate -> candidate.getNotificationType() == notificationType)
                 .findAny()
                 .orElseThrow(() ->
@@ -54,7 +53,7 @@ public class Parameterizer {
                                 notification));
 
 
-        Map<TemplatePrototype.Name, InputStream> templates =
+        Map<NotificationTemplate.Name, InputStream> templates =
                 template.getRefs()
                         .entrySet()
                         .stream()

@@ -16,7 +16,7 @@
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
 import org.dataconservancy.pass.notification.model.Notification;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -37,7 +37,7 @@ public interface TemplateParameterizer {
      * @param template the template being parameterized
      * @return the processed template, with placeholders replaced by values from {@code paramMap}
      */
-    String parameterize(TemplatePrototype.Name templateName, Map<Notification.Param, String> paramMap,
+    String parameterize(NotificationTemplate.Name templateName, Map<Notification.Param, String> paramMap,
                         InputStream template);
 
 }

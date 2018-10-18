@@ -23,16 +23,16 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Allows for the customization of notification subject, body, and footer.  The {@code TemplatePrototype} used is a
+ * Allows for the customization of notification subject, body, and footer.  The {@code NotificationTemplate} used is a
  * function of {@link Notification#getType() notification type}; each notification type has exactly one {@code
- * TemplatePrototype} used to compose notifications for that type.
+ * NotificationTemplate} used to compose notifications for that type.
  * <p>
- * {@code TemplatePrototype}
+ * {@code NotificationTemplate}
  * </p>
  *
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
-public class TemplatePrototype {
+public class NotificationTemplate {
 
     public enum Name {
 
@@ -89,7 +89,7 @@ public class TemplatePrototype {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        TemplatePrototype that = (TemplatePrototype) o;
+        NotificationTemplate that = (NotificationTemplate) o;
         return Objects.equals(refs, that.refs) &&
                 notificationType == that.notificationType;
     }
@@ -101,7 +101,7 @@ public class TemplatePrototype {
 
     @Override
     public String toString() {
-        return "TemplatePrototype{" +
+        return "NotificationTemplate{" +
                 "bodies=" + refs +
                 ", notificationType=" + notificationType +
                 '}';

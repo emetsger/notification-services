@@ -19,7 +19,7 @@ import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.dispatch.DispatchService;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.simplejavamail.email.Email;
 import org.simplejavamail.mailer.Mailer;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * Dispatches {@link Notification}s as email messages.  Email templates are configured by {@link TemplatePrototype}s
+ * Dispatches {@link Notification}s as email messages.  Email templates are configured by {@link NotificationTemplate}s
  * obtained from the {@link NotificationConfig}, and processed using a {@link TemplateParameterizer}.
  * <p>
  * This implementation expects notification recipients to be encoded as URIs.  Email addresses can be encoded
@@ -63,7 +63,7 @@ public class EmailDispatchImpl implements DispatchService {
 
             // resolve templates for subject, body, footer based on notification type
 
-            Map<TemplatePrototype.Name, String> parameterizedTemplates = parameterizer.
+            Map<NotificationTemplate.Name, String> parameterizedTemplates = parameterizer.
                     resolveAndParameterize(notification, notificationType);
 
             // compose email

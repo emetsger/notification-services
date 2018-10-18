@@ -15,7 +15,7 @@
  */
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public class CompositeResolver implements TemplateResolver {
     }
 
     @Override
-    public InputStream resolve(TemplatePrototype.Name name, String template) {
+    public InputStream resolve(NotificationTemplate.Name name, String template) {
         InputStream in = null;
         for (TemplateResolver resolver : resolvers) {
             try {

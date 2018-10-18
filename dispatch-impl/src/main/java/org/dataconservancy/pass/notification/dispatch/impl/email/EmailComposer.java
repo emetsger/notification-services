@@ -18,7 +18,7 @@ package org.dataconservancy.pass.notification.dispatch.impl.email;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.model.Notification;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.simplejavamail.email.Email;
 import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.email.EmailPopulatingBuilder;
@@ -42,7 +42,7 @@ public class EmailComposer {
         this.passClient = passClient;
     }
 
-    Email compose(Notification n, Map<TemplatePrototype.Name, String> templates) {
+    Email compose(Notification n, Map<NotificationTemplate.Name, String> templates) {
         String emailToAddress = String.join(",", parseRecipientUris(n.getRecipients()
                 .stream().map(URI::create).collect(Collectors.toSet()), passClient));
 
@@ -57,10 +57,10 @@ public class EmailComposer {
         EmailPopulatingBuilder builder = EmailBuilder.startingBlank()
                 .from(n.getSender())
                 .to(emailToAddress)
-                .withSubject(templates.getOrDefault(TemplatePrototype.Name.SUBJECT, ""))
+                .withSubject(templates.getOrDefault(NotificationTemplate.Name.SUBJECT, ""))
                 .withPlainText(String.join("\n\n",
-                        templates.getOrDefault(TemplatePrototype.Name.BODY, ""),
-                        templates.getOrDefault(TemplatePrototype.Name.FOOTER, "")));
+                        templates.getOrDefault(NotificationTemplate.Name.BODY, ""),
+                        templates.getOrDefault(NotificationTemplate.Name.FOOTER, "")));
 
         // builder refuses to build the cc with an empty collection
         if (n.getCc() != null && !n.getCc().isEmpty()) {

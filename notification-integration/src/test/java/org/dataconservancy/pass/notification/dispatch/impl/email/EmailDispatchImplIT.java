@@ -19,10 +19,9 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.notification.SpringBootIntegrationConfig;
 import org.dataconservancy.pass.notification.app.NotificationApp;
-import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.SimpleNotification;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.dataconservancy.pass.notification.util.async.Condition;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
 import org.junit.Test;
@@ -128,19 +127,19 @@ public class EmailDispatchImplIT {
     @Test
     public void notificationConfigWithTemplateRefs() throws Exception {
 
-        // Override the TemplatePrototype for approval invites, subbing in Spring URIs as references
+        // Override the NotificationTemplate for approval invites, subbing in Spring URIs as references
         // to template bodies
-        TemplatePrototype template = config.getTemplates().stream()
+        NotificationTemplate template = config.getTemplates().stream()
                 .filter(templatePrototype ->
                         templatePrototype.getNotificationType() == SUBMISSION_APPROVAL_INVITE)
                 .findAny()
                 .orElseThrow(() -> new RuntimeException("Missing expected template for SUBMISSION_APPROVAL_INVITE"));
 
-        template.setRefs(new HashMap<TemplatePrototype.Name, String>() {
+        template.setRefs(new HashMap<NotificationTemplate.Name, String>() {
             {
-                put(TemplatePrototype.Name.SUBJECT, "classpath:" + packageAsPath() + "/subject.hbr");
-                put(TemplatePrototype.Name.BODY, "classpath:" + packageAsPath() + "/body.hbr");
-                put(TemplatePrototype.Name.FOOTER, "classpath:" + packageAsPath() + "/footer.hbr");
+                put(NotificationTemplate.Name.SUBJECT, "classpath:" + packageAsPath() + "/subject.hbr");
+                put(NotificationTemplate.Name.BODY, "classpath:" + packageAsPath() + "/body.hbr");
+                put(NotificationTemplate.Name.FOOTER, "classpath:" + packageAsPath() + "/footer.hbr");
             }
         });
 

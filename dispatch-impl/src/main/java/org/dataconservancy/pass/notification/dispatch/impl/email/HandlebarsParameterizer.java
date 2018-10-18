@@ -20,7 +20,7 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import org.apache.commons.io.IOUtils;
 import org.dataconservancy.pass.notification.model.Notification;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class HandlebarsParameterizer implements TemplateParameterizer {
     }
 
     @Override
-    public String parameterize(TemplatePrototype.Name templateName, Map<Notification.Param, String> paramMap,
+    public String parameterize(NotificationTemplate.Name templateName, Map<Notification.Param, String> paramMap,
                                InputStream template) {
 
         Map<String, Object> mustacheModel = paramMap

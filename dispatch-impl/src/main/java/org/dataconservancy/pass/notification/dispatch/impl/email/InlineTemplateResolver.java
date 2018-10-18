@@ -15,7 +15,7 @@
  */
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -37,7 +37,7 @@ public class InlineTemplateResolver implements TemplateResolver {
      * @return the supplied {@code template} as an {@code InputStream}
      */
     @Override
-    public InputStream resolve(TemplatePrototype.Name name, String template) {
+    public InputStream resolve(NotificationTemplate.Name name, String template) {
         return new ByteArrayInputStream(template.getBytes());
     }
 

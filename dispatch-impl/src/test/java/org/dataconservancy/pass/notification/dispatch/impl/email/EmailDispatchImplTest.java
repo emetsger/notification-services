@@ -21,8 +21,8 @@ import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.Notification.Param;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype;
-import org.dataconservancy.pass.notification.model.config.template.TemplatePrototype.Name;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
+import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate.Name;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -52,7 +52,7 @@ public class EmailDispatchImplTest {
 
     private NotificationConfig config;
 
-    private TemplatePrototype templateProto;
+    private NotificationTemplate templateProto;
 
     private TemplateResolver templateResolver;
 
@@ -89,7 +89,7 @@ public class EmailDispatchImplTest {
     public void setUp() throws Exception {
         notification = mock(Notification.class);
         config = mock(NotificationConfig.class);
-        templateProto = mock(TemplatePrototype.class);
+        templateProto = mock(NotificationTemplate.class);
         templateResolver = mock(TemplateResolver.class);
         passClient = mock(PassClient.class);
         user = mock(User.class);
@@ -135,7 +135,7 @@ public class EmailDispatchImplTest {
                 IOUtils.toInputStream(inv.getArgument(1), "UTF-8"));
 
         when(templateParameterizer.parameterize(any(), any(), any())).thenAnswer(inv -> {
-            TemplatePrototype.Name name = inv.getArgument(0);
+            NotificationTemplate.Name name = inv.getArgument(0);
             switch (name) {
                 case SUBJECT:
                     return "A Subject";
