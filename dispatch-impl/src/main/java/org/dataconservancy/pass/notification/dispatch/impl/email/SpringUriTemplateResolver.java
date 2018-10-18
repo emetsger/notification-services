@@ -68,10 +68,10 @@ public class SpringUriTemplateResolver implements TemplateResolver {
         try {
             return new FileSystemResource(template).getInputStream();
         } catch (IOException e) {
-            String msg = format("Error resolving template name '%s', '%s' as a Spring Resource: %s",
-                    name, template, e.getMessage());
-            throw new RuntimeException(msg, e);
+            LOG.debug("Unable to resolve template named '{}' (value: '{}') as a Spring Resource.", name, template);
         }
+
+        return null;
 
     }
 }

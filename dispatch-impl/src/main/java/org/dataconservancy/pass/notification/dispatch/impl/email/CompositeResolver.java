@@ -57,6 +57,7 @@ public class CompositeResolver implements TemplateResolver {
         InputStream in = null;
         for (TemplateResolver resolver : resolvers) {
             try {
+                LOG.debug("Attempting resolution of template value '{}', for named template '{}'", template, name);
                 in = resolver.resolve(name, template);
                 if (in != null) {
                     return in;

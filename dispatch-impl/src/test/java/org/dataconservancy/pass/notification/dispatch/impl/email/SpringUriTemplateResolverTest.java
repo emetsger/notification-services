@@ -27,6 +27,7 @@ import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class SpringUriTemplateResolverTest {
 
@@ -73,9 +74,9 @@ public class SpringUriTemplateResolverTest {
         assertNotNull(underTest.resolve(null, u.getPath()));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void resolveUnsupportedProtocol() throws MalformedURLException {
-        underTest.resolve(null,
-                new URL("jar:file:/path/to/file.jar!/path/to/resource").toString());
+        assertNull(underTest.resolve(null,
+                new URL("jar:file:/path/to/file.jar!/path/to/resource").toString()));
     }
 }
