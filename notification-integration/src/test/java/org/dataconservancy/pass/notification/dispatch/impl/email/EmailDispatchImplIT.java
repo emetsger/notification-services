@@ -15,35 +15,50 @@
  */
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.IOUtils;
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.notification.SpringBootIntegrationConfig;
 import org.dataconservancy.pass.notification.app.NotificationApp;
+import org.dataconservancy.pass.notification.impl.Composer;
+import org.dataconservancy.pass.notification.impl.ComposerIT;
+import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.SimpleNotification;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.dataconservancy.pass.notification.util.async.Condition;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.mail.Message;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static java.lang.String.join;
+import static java.nio.charset.Charset.forName;
+import static org.apache.commons.io.IOUtils.resourceToString;
+import static org.dataconservancy.pass.notification.model.Notification.Param.*;
 import static org.dataconservancy.pass.notification.model.Notification.Type.SUBMISSION_APPROVAL_INVITE;
 import static org.dataconservancy.pass.notification.util.mail.SimpleImapClient.getBodyAsText;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -65,6 +80,9 @@ public class EmailDispatchImplIT {
 
     @Autowired
     private NotificationConfig config;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     /**
      * Simple test insuring the basic parts of the dispatch email are where they belong.
@@ -125,6 +143,7 @@ public class EmailDispatchImplIT {
      * References to subject/body/footer templates should be resolved
      */
     @Test
+    @DirtiesContext
     public void notificationConfigWithTemplateRefs() throws Exception {
 
         // Override the NotificationTemplate for approval invites, subbing in Spring URIs as references
@@ -161,10 +180,77 @@ public class EmailDispatchImplIT {
         assertEquals("Handlebars Body\r\n\r\nHandlebars Footer", getBodyAsText(message));
     }
 
+    @Test
+    public void subjectTemplateParameterization() throws Exception {
+        Submission submission = new Submission();
+        submission.setMetadata(resourceToString("/" + packageAsPath(ComposerIT.class) + "/submission-metadata.json", forName("UTF-8")));
 
+        SubmissionEvent event = new SubmissionEvent();
+        event.setId(URI.create("http://example.org/event/1"));
+        event.setPerformerRole(SubmissionEvent.PerformerRole.PREPARER);
+        event.setPerformedBy(URI.create("http://example.org/user/1"));
+        event.setComment("How does this submission look?");
+        event.setEventType(SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+        event.setPerformedDate(DateTime.now());
+
+        // Override the NotificationTemplate for approval invites, including a template that
+        // requires parameterization
+        NotificationTemplate template = config.getTemplates().stream()
+                .filter(templatePrototype ->
+                        templatePrototype.getNotificationType() == SUBMISSION_APPROVAL_INVITE)
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("Missing expected template for SUBMISSION_APPROVAL_INVITE"));
+
+        template.setTemplates(new HashMap<NotificationTemplate.Name, String>() {
+            {
+                put(NotificationTemplate.Name.SUBJECT, "classpath:" + packageAsPath() + "/subject-parameterize.hbr");
+                put(NotificationTemplate.Name.BODY, "classpath:" + packageAsPath() + "/body-parameterize.hbr");
+                put(NotificationTemplate.Name.FOOTER, "Footer");
+            }
+        });
+
+        config.setTemplates(Collections.singleton(template));
+
+        SimpleNotification n = new SimpleNotification();
+        n.setType(SUBMISSION_APPROVAL_INVITE);
+        String sender = "preparer@mail.local.domain";
+        n.setSender(sender);
+        String recipient = "emetsger@mail.local.domain";
+        n.setRecipient(Collections.singleton("mailto:" + recipient));
+        n.setParameters(new HashMap<Notification.Param, String>() {
+            {
+                put(RESOURCE_METADATA, Composer.resourceMetadata(submission, objectMapper));
+                put(EVENT_METADATA, Composer.eventMetadata(event, objectMapper));
+                put(FROM, sender);
+                put(TO, recipient);
+            }
+        });
+
+        String messageId = underTest.dispatch(n);
+        assertNotNull(messageId);
+
+        newMessageCondition(messageId, imapClient).await();
+        Message message = getMessage(messageId, imapClient).call();
+        assertNotNull(message);
+
+        String expectedTitle = objectMapper.readTree(submission.getMetadata()).findValue("title").asText();
+        String expectedSubject = "PASS Submission titled \"" + expectedTitle + "\" awaiting your approval";
+        assertEquals(expectedSubject, message.getSubject());
+
+        String body = SimpleImapClient.getBodyAsText(message);
+
+        assertTrue(body.contains("Dear " + n.getParameters().get(TO)));
+        assertTrue(body.contains("prepared on your behalf by " + n.getParameters().get(FROM)));  // TODO FROM will be the global FROM, must insure the preparer User is represented in metadata.
+        assertTrue(body.contains(event.getComment()));
+        assertTrue(body.contains(expectedTitle));
+    }
 
     private static String packageAsPath() {
-        return EmailDispatchImplIT.class.getPackage().getName().replace('.', '/');
+        return packageAsPath(EmailDispatchImplIT.class);
+    }
+
+    private static String packageAsPath(Class<?> clazz) {
+        return clazz.getPackage().getName().replace('.', '/');
     }
 
     private static Condition<Message> newMessageCondition(String messageId, SimpleImapClient imapClient) {

@@ -15,6 +15,9 @@
  */
 package org.dataconservancy.pass.notification.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.notification.model.Notification;
@@ -23,10 +26,14 @@ import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.notification.model.config.RecipientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ReflectionUtils;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -59,14 +66,17 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
 
     private RecipientAnalyzer recipientAnalyzer;
 
-    public Composer(NotificationConfig config) {
+    private ObjectMapper mapper;
+
+    public Composer(NotificationConfig config, ObjectMapper mapper) {
+        this.mapper = mapper;
         Objects.requireNonNull(config, "NotificationConfig must not be null.");
         recipientConfig = getRecipientConfig(config);
         recipientAnalyzer = new RecipientAnalyzer(new SimpleWhitelist(recipientConfig));
     }
 
-    public Composer(NotificationConfig config, RecipientAnalyzer recipientAnalyzer) {
-        this(config);
+    public Composer(NotificationConfig config, RecipientAnalyzer recipientAnalyzer, ObjectMapper mapper) {
+        this(config, mapper);
         Objects.requireNonNull(config, "RecipientAnalyzer must not be null.");
         this.recipientAnalyzer = recipientAnalyzer;
     }
@@ -94,7 +104,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         notification.setParameters(params);
 
         notification.setEventUri(event.getId());
-        params.put(Notification.Param.EVENT_METADATA, event.getId().toString());  // TODO: invoke adapter to produce JSON representation of event?
+        params.put(Notification.Param.EVENT_METADATA, eventMetadata(event, mapper));
 
         Collection<String> cc = recipientConfig.getGlobalCc();
         if (cc != null && !cc.isEmpty()) {
@@ -103,7 +113,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         }
 
         notification.setResourceUri(submission.getId());
-        params.put(Notification.Param.RESOURCE_METADATA, submission.getMetadata());
+        params.put(Notification.Param.RESOURCE_METADATA, resourceMetadata(submission, mapper));
 
         String from = recipientConfig.getFromAddress();
         notification.setSender(from);
@@ -174,6 +184,42 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
                         new RuntimeException("Missing recipient configuration for Mode '" + config.getMode() + "'"));
     }
 
+    public static String resourceMetadata(Submission submission, ObjectMapper mapper) {
+        String metadata = submission.getMetadata();
+        if (metadata == null || metadata.trim().length() == 0) {
+            return "{}";
+        }
+        JsonNode metadataNode = null;
+        try {
+            metadataNode = mapper.readTree(metadata);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        ObjectNode resourceMetadata = mapper.createObjectNode();
+        resourceMetadata.put("title", field("title", metadataNode).orElse(""));
+        resourceMetadata.put("journal-title", field("journal-title", metadataNode).orElse(""));
+        resourceMetadata.put("volume", field("volume", metadataNode).orElse(""));
+        resourceMetadata.put("issue", field("issue", metadataNode).orElse(""));
+        resourceMetadata.put("abstract", field("abstract", metadataNode).orElse(""));
+        resourceMetadata.put("doi", field("doi", metadataNode).orElse(""));
+        resourceMetadata.put("publisher", field("publisher", metadataNode).orElse(""));
+        resourceMetadata.put("authors", field("authors", metadataNode).orElse(""));
+        return resourceMetadata.toString();
+    }
+
+    public static String eventMetadata(SubmissionEvent event, ObjectMapper mapper) {
+        ObjectNode eventMetadata = mapper.createObjectNode();
+        eventMetadata.put("id", field("id", event).orElse(""));
+        eventMetadata.put("comment", field("comment", event).orElse(""));
+        eventMetadata.put("performedDate", field("performedDate", event).orElse(""));
+        eventMetadata.put("performedBy", field("performedBy", event).orElse(""));
+        eventMetadata.put("performerRole", field("performerRole", event).orElse(""));
+        eventMetadata.put("performedDate", field("performedDate", event).orElse(""));
+        eventMetadata.put("eventType", field("eventType", event).orElse(""));
+        return eventMetadata.toString();
+    }
+
     static class RecipientConfigFilter {
 
         /**
@@ -185,5 +231,24 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
             return (rc) -> config.getMode() == rc.getMode();
         }
 
+    }
+
+    static Optional<String> field(String fieldname, JsonNode metadata) {
+        Optional<JsonNode> node = Optional.ofNullable(metadata.findValue(fieldname));
+        if (node.isPresent() && node.get().isArray()) {
+            return node.map(Objects::toString);
+        }
+        return node.map(JsonNode::asText);
+    }
+
+    static Optional<String> field(String fieldname, SubmissionEvent event) {
+        Optional<Field> field = Optional.ofNullable(ReflectionUtils.findField(SubmissionEvent.class, fieldname));
+        return field
+                .map(f -> {
+                    ReflectionUtils.makeAccessible(f);
+                    return f;
+                })
+                .map(f -> ReflectionUtils.getField(f, event))
+                .map(Object::toString);
     }
 }

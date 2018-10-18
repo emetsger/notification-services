@@ -227,8 +227,8 @@ public class SpringBootNotificationConfig {
     }
 
     @Bean
-    public Composer composer(NotificationConfig notificationConfig, RecipientAnalyzer recipientAnalyzer) {
-        return new Composer(notificationConfig, recipientAnalyzer);
+    public Composer composer(NotificationConfig notificationConfig, RecipientAnalyzer recipientAnalyzer, ObjectMapper objectMapper) {
+        return new Composer(notificationConfig, recipientAnalyzer, objectMapper);
     }
 
 }

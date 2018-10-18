@@ -1,0 +1,6 @@
+Dear {{to}}
+
+A submission titled "{{#resource_metadata}}{{title}}{{/resource_metadata}}" has been prepared on your behalf by {{from}} {{#event_metadata}}{{#if comment}}with comment "{{comment}}"{{else}}.{{/if}}{{/event_metadata}}
+
+
+Please review the submission at the following URL: {{#each link_metadata}}{{#eq rel submissionReview}}{{href}}{{else}}{{/eq}}{{/each}}

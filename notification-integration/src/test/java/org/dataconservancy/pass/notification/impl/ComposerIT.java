@@ -18,6 +18,8 @@
 
 package org.dataconservancy.pass.notification.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
@@ -30,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -91,6 +94,10 @@ public class ComposerIT {
 
     @Autowired
     private PassClient passClient;
+
+    @Autowired
+    @Qualifier("objectMapper")
+    private ObjectMapper mapper;
 
     @Before
     public void setUp() throws Exception {
@@ -212,7 +219,7 @@ public class ComposerIT {
 
         Arrays.stream(Mode.values()).forEach(mode -> {
             config.setMode(mode);
-            assertEquals(mode, new Composer(config).getRecipientConfig().getMode());
+            assertEquals(mode, new Composer(config, mapper).getRecipientConfig().getMode());
         });
     }
 
@@ -245,8 +252,8 @@ public class ComposerIT {
 
         Arrays.stream(Mode.values()).forEach(mode -> {
             config.setMode(mode);
-            assertEquals(mode, new Composer(config).getRecipientConfig().getMode());
-            assertEquals(rcs.get(mode).getFromAddress(), new Composer(config).getRecipientConfig().getFromAddress());
+            assertEquals(mode, new Composer(config, mapper).getRecipientConfig().getMode());
+            assertEquals(rcs.get(mode).getFromAddress(), new Composer(config, mapper).getRecipientConfig().getFromAddress());
         });
     }
 
@@ -269,8 +276,8 @@ public class ComposerIT {
 
         Arrays.stream(Mode.values()).forEach(mode -> {
             config.setMode(mode);
-            assertEquals(mode, new Composer(config).getRecipientConfig().getMode());
-            assertEquals(rcs.get(mode).getGlobalCc(), new Composer(config).getRecipientConfig().getGlobalCc());
+            assertEquals(mode, new Composer(config, mapper).getRecipientConfig().getMode());
+            assertEquals(rcs.get(mode).getGlobalCc(), new Composer(config, mapper).getRecipientConfig().getGlobalCc());
         });
     }
 
@@ -342,13 +349,15 @@ public class ComposerIT {
         Notification n = composer.apply(submission, event);
         Map<Notification.Param, String> params = n.getParameters();
 
-        assertEquals(metadata, params.get(RESOURCE_METADATA));
+        assertEquals(Composer.resourceMetadata(submission, mapper), params.get(RESOURCE_METADATA));
         // TODO Params map contains URIs of recipients at this point, they've not been resolved to email addresses
         // TODO Recipient URIs aren't resolved until Dispatch
         assertEquals(to, params.get(TO));
         assertEquals(getRecipientConfig(config).getFromAddress(), params.get(FROM));
         assertEquals(join(",", getRecipientConfig(config).getGlobalCc()), params.get(CC));
-        assertEquals(event.getId().toString(), params.get(EVENT_METADATA));
+        assertEquals(Composer.eventMetadata(event, mapper), params.get(EVENT_METADATA));
+        JsonNode eventMdNode = mapper.readTree(params.get(EVENT_METADATA));
+        assertEquals(event.getId().toString(), Composer.field("id", eventMdNode).get());
         // TODO remove Subject?  Unset at this point, since templates haven't been resolved or parameterized
         assertNull(params.get(SUBJECT));
     }
