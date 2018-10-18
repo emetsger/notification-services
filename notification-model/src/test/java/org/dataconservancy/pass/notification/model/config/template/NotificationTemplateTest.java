@@ -34,7 +34,7 @@ public class NotificationTemplateTest extends AbstractJacksonMappingTest {
     private final String TEMPLATE_JSON = "" +
             "{\n" +
             "        \"notification\": \"SUBMISSION_APPROVAL_INVITE\",\n" +
-            "        \"refs\": {\n" +
+            "        \"templates\": {\n" +
             "          \"SUBJECT\": \"PASS Submission Approval: ${RESOURCE_METADATA.title}\",\n" +
             "          \"BODY\": \"classpath*:pass-body-submission-approval-invite-template.vm\",\n" +
             "          \"FOOTER\": \"classpath*:pass-footer-template.vm\"\n" +
@@ -46,10 +46,10 @@ public class NotificationTemplateTest extends AbstractJacksonMappingTest {
         NotificationTemplate template = mapper.readValue(TEMPLATE_JSON, NotificationTemplate.class);
 //        mapper.writer(SerializationFeature.INDENT_OUTPUT).writeValue(System.err, template);
         assertEquals(Notification.Type.SUBMISSION_APPROVAL_INVITE, template.getNotificationType());
-        assertEquals(3, template.getRefs().size());
-        assertEquals("PASS Submission Approval: ${RESOURCE_METADATA.title}", template.getRefs().get(SUBJECT));
-        assertEquals("classpath*:pass-body-submission-approval-invite-template.vm", template.getRefs().get(BODY));
-        assertEquals("classpath*:pass-footer-template.vm", template.getRefs().get(FOOTER));
+        assertEquals(3, template.getTemplates().size());
+        assertEquals("PASS Submission Approval: ${RESOURCE_METADATA.title}", template.getTemplates().get(SUBJECT));
+        assertEquals("classpath*:pass-body-submission-approval-invite-template.vm", template.getTemplates().get(BODY));
+        assertEquals("classpath*:pass-footer-template.vm", template.getTemplates().get(FOOTER));
         assertRoundTrip(template, NotificationTemplate.class);
     }
 }

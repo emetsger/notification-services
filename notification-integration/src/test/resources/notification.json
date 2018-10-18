@@ -15,7 +15,7 @@
   "templates": [
     {
       "notification": "SUBMISSION_APPROVAL_INVITE",
-      "refs": {
+      "templates": {
         "SUBJECT": "Approval Invite Subject",
         "BODY": "Approval Invite Body",
         "FOOTER": "Approval Invite Footer"
@@ -23,7 +23,7 @@
     },
     {
       "notification": "SUBMISSION_APPROVAL_REQUESTED",
-      "refs": {
+      "templates": {
         "SUBJECT": "Approval Requested Subject",
         "BODY": "Approval Requested Body",
         "FOOTER": "Approval Requested Footer"
@@ -31,7 +31,7 @@
     },
     {
       "notification": "SUBMISSION_CHANGES_REQUESTED",
-      "refs": {
+      "templates": {
         "SUBJECT": "Changes Requested Subject",
         "BODY": "Changes Requested Body",
         "FOOTER": "Changes Requested Footer"
@@ -39,7 +39,7 @@
     },
     {
       "notification": "SUBMISSION_SUBMISSION_SUBMITTED",
-      "refs": {
+      "templates": {
         "SUBJECT": "Submission Submitted Subject",
         "BODY": "Submission Submitted Body",
         "FOOTER": "Submission Submitted Footer"
@@ -47,7 +47,7 @@
     },
     {
       "notification": "SUBMISSION_SUBMISSION_CANCELLED",
-      "refs": {
+      "templates": {
         "SUBJECT": "Submission Cancelled Subject",
         "BODY": "Submission Cancelled Body",
         "FOOTER": "Submission Cancelled Footer"

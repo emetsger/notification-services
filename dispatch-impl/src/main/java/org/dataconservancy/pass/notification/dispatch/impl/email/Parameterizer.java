@@ -54,7 +54,7 @@ public class Parameterizer {
 
 
         Map<NotificationTemplate.Name, InputStream> templates =
-                template.getRefs()
+                template.getTemplates()
                         .entrySet()
                         .stream()
                         .collect(Collectors.toMap(Map.Entry::getKey,

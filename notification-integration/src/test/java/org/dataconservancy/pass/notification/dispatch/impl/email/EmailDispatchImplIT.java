@@ -135,7 +135,7 @@ public class EmailDispatchImplIT {
                 .findAny()
                 .orElseThrow(() -> new RuntimeException("Missing expected template for SUBMISSION_APPROVAL_INVITE"));
 
-        template.setRefs(new HashMap<NotificationTemplate.Name, String>() {
+        template.setTemplates(new HashMap<NotificationTemplate.Name, String>() {
             {
                 put(NotificationTemplate.Name.SUBJECT, "classpath:" + packageAsPath() + "/subject.hbr");
                 put(NotificationTemplate.Name.BODY, "classpath:" + packageAsPath() + "/body.hbr");

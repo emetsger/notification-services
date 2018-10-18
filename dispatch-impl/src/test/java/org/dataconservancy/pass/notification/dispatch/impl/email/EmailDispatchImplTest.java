@@ -97,7 +97,7 @@ public class EmailDispatchImplTest {
         templateParameterizer = mock(TemplateParameterizer.class);
 
         when(config.getTemplates()).thenReturn(Collections.singletonList(templateProto));
-        when(templateProto.getRefs()).thenReturn(new HashMap<Name, String> () {
+        when(templateProto.getTemplates()).thenReturn(new HashMap<Name, String> () {
             {
                 put(Name.SUBJECT, "A Subject");
                 put(Name.BODY, "A Body");

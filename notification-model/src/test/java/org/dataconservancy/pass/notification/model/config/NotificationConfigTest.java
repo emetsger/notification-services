@@ -55,7 +55,7 @@ public class NotificationConfigTest extends AbstractJacksonMappingTest {
             "    \"templates\": [\n" +
             "      {\n" +
             "        \"notification\": \"SUBMISSION_APPROVAL_INVITE\",\n" +
-            "        \"refs\": {\n" +
+            "        \"templates\": {\n" +
             "          \"SUBJECT\": \"PASS Submission Approval: ${RESOURCE_METADATA.title}\",\n" +
             "          \"BODY\": \"classpath*:pass-body-submission-approval-invite-template.vm\",\n" +
             "          \"FOOTER\": \"classpath*:pass-footer-template.vm\"\n" +
