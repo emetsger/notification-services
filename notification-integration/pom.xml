@@ -120,7 +120,13 @@
                             <name>${docker.tvial.docker-mailserver.version}</name>
                             <run>
                                 <wait>
-                                    <time>60000</time>
+                                    <tcp>
+                                        <mode>mapped</mode>
+                                        <ports>
+                                            <port>${mail.imaps.port}</port>
+                                            <port>${mail.smtp.port}</port>
+                                        </ports>
+                                    </tcp>
                                 </wait>
                                 <skip>${mail.skip}</skip>
                                 <hostname>mail</hostname>
