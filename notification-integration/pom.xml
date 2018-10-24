@@ -31,6 +31,8 @@
     <properties>
         <mail.skip>false</mail.skip>
         <fcrepo.skip>false</fcrepo.skip>
+        <ldap.skip>false</ldap.skip>
+        <ldap.waitms>5000</ldap.waitms>
         <mail.server>${docker.host.address}</mail.server>
         <mail.waitms>15000</mail.waitms>
         <fcrepo.server>${docker.host.address}</fcrepo.server>
@@ -52,6 +54,7 @@
             </activation>
             <properties>
                 <mail.waitms>120000</mail.waitms>
+                <ldap.waitms>30000</ldap.waitms>
             </properties>
         </profile>
     </profiles>
@@ -102,8 +105,6 @@
                         <pass.notification.smtp.port>${mail.smtp.port}</pass.notification.smtp.port>
 
                         <!-- IMAP properties for ITs -->
-                        <mail.imap.user>emetsger@mail.local.domain</mail.imap.user>
-                        <mail.imap.password>moo</mail.imap.password>
                         <mail.imap.host>${mail.server}</mail.imap.host>
                         <mail.imap.port>${mail.imaps.port}</mail.imap.port>
                         <mail.imap.ssl.enable>true</mail.imap.ssl.enable>
@@ -111,6 +112,10 @@
                         <mail.imap.starttls.enable>true</mail.imap.starttls.enable>
                         <mail.imap.finalizecleanclose>false</mail.imap.finalizecleanclose>
 
+                        <!-- Default username / password when connecting to IMAP -->
+                        <!-- Override by setting the desired credentials on the SimpleImapClientFactory -->
+                        <mail.imap.user>staffwithnogrants@jhu.edu</mail.imap.user>
+                        <mail.imap.password>moo</mail.imap.password>
                     </systemProperties>
                 </configuration>
                 <executions>
@@ -194,6 +199,17 @@
                                     <FCREPO_JMS_BASEURL>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/
                                     </FCREPO_JMS_BASEURL>
                                 </env>
+                            </run>
+                        </image>
+
+                        <image>
+                            <alias>ldap</alias>
+                            <name>${docker.ldap.version}</name>
+                            <run>
+                                <skip>${ldap.skip}</skip>
+                                <wait>
+                                    <time>${ldap.waitms}</time>
+                                </wait>
                             </run>
                         </image>
 
