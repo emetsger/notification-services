@@ -17,6 +17,8 @@ package org.dataconservancy.pass.notification;
 
 import com.sun.mail.imap.IMAPStore;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,9 +33,14 @@ import javax.mail.Session;
 @Configuration
 public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleImapClientFactory.class);
+
     private IMAPStore imapStore;
 
     private Session session;
+
+    @Value("${mail.imap.host}")
+    private String imapHost;
 
     @Value("${mail.imap.user}")
     private String imapUser;
@@ -66,7 +73,16 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
     @Override
     public SimpleImapClient getObject() throws Exception {
         try {
-            imapStore.connect(imapUser, imapPass);
+            LOG.warn("Connecting to IMAP host '{}' store '{}@{}' with username '{}'",
+                    imapHost,
+                    imapStore.getClass().getName(),
+                    Integer.toHexString(System.identityHashCode(imapStore)),
+                    imapUser);
+            imapStore.connect(imapHost, imapUser, imapPass);
+            LOG.warn("Store '{}@{}' connected? '{}'",
+                    imapStore.getClass().getName(),
+                    Integer.toHexString(System.identityHashCode(imapStore)),
+                    imapStore.isConnected());
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }

@@ -17,8 +17,10 @@ package org.dataconservancy.pass.notification;
 
 import com.sun.mail.imap.IMAPStore;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -69,6 +71,7 @@ public class SimpleImapClientFactoryConfiguration {
     }
 
     @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public IMAPStore imapStore(Session session) {
         try {
             return (IMAPStore) session.getStore("imap");

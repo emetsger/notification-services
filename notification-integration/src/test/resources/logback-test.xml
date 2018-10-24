@@ -45,6 +45,10 @@
     <logger name="NOTIFICATION_LOG" additivity="false" level="${org.dataconservancy.pass.notification.level:-INFO}">
         <appender-ref ref="STDERR"/>
     </logger>
+
+    <logger name="com.sun.mail.imap" additivity="false" level="${com.sun.mail.imap.level:-WARN}">
+        <appender-ref ref="STDERR"/>
+    </logger>
     <!-- the rest client is noisy, and detracts from looking at test logging output -->
     <logger name="org.elasticsearch.client.RestClient" additivity="false" level="${org.elasticsearch.client.level:-ERROR}">
         <appender-ref ref="STDERR"/>

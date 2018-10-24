@@ -271,7 +271,9 @@ public class EmailDispatchImplIT {
     }
 
     private static Condition<Message> newMessageCondition(String messageId, SimpleImapClient imapClient) {
-        return new Condition<>(getMessage(messageId, imapClient), Objects::nonNull, "New message");
+        Condition<Message> c = new Condition<>(getMessage(messageId, imapClient), Objects::nonNull, "New message");
+        c.setTimeoutThresholdMs(10000);
+        return c;
     }
 
     private static Callable<Message> getMessage(String messageId, SimpleImapClient imapClient) {

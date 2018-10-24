@@ -53,6 +53,10 @@ public class SimpleImapClient {
     public SimpleImapClient(Session mailSession, IMAPStore store) {
         this.mailSession = mailSession;
         this.store = store;
+        LOG.trace("Constructed store '{}@{}' isConnected? '{}'",
+                store.getClass().getName(),
+                Integer.toHexString(System.identityHashCode(store)),
+                store.isConnected());
     }
 
     /**
@@ -67,9 +71,17 @@ public class SimpleImapClient {
 
         MessageIDTerm idTerm = new MessageIDTerm(messageId);
 
+        LOG.trace("Store '{}@{}' isConnected? '{}'",
+                store.getClass().getName(),
+                Integer.toHexString(System.identityHashCode(store)),
+                store.isConnected());
+
         return getFolders().stream().filter(folder -> folder.getName().length() > 0).flatMap(folder -> {
             try {
-                LOG.trace("Opening folder '{}'", folder.getName());
+                LOG.trace("Store '{}@{}' opening folder '{}'",
+                        store.getClass().getName(),
+                        Integer.toHexString(System.identityHashCode(store)),
+                        folder.getName());
                 folder.open(Folder.READ_ONLY);
                 Message[] messages = folder.search(idTerm);
                 if (messages != null && messages.length > 0) {
