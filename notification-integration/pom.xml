@@ -102,7 +102,7 @@
                         <es.host>${es.server}</es.host>
                         <es.port>${es.http.port}</es.port>
                         <pass.notification.smtp.host>${mail.server}</pass.notification.smtp.host>
-                        <pass.notification.smtp.port>${mail.smtp.port}</pass.notification.smtp.port>
+                        <pass.notification.smtp.port>${mail.msp.port}</pass.notification.smtp.port>
 
                         <!-- IMAP properties for ITs -->
                         <mail.imap.host>${mail.server}</mail.imap.host>
