@@ -157,14 +157,28 @@
                                 </volumes>
                                 <env>
                                     <HOSTNAME>mail</HOSTNAME>
-                                    <DOMAINNAME>local.domain</DOMAINNAME>
+                                    <DOMAINNAME>jhu.edu</DOMAINNAME>
                                     <DMS_DEBUG>0</DMS_DEBUG>
                                     <ONE_DIR>1</ONE_DIR>
                                     <SMTP_ONLY>0</SMTP_ONLY>
                                     <PERMIT_DOCKER>network</PERMIT_DOCKER>
-                                    <OVERRIDE_HOSTNAME>mail.local.domain</OVERRIDE_HOSTNAME>
+                                    <OVERRIDE_HOSTNAME>mail.jhu.edu</OVERRIDE_HOSTNAME>
                                     <TLS_LEVEL>intermediate</TLS_LEVEL>
                                     <ENABLE_SPAMASSASSIN>0</ENABLE_SPAMASSASSIN>
+                                    <ENABLE_CLAMAV>0</ENABLE_CLAMAV>
+                                    <ENABLE_FAIL2BAN>0</ENABLE_FAIL2BAN>
+                                    <ENABLE_POSTGREY>0</ENABLE_POSTGREY>
+                                    <ENABLE_SASLAUTHD>0</ENABLE_SASLAUTHD>
+                                    <POSTMASTER_ADDRESS>root</POSTMASTER_ADDRESS>
+                                    <ENABLE_LDAP>1</ENABLE_LDAP>
+                                    <LDAP_SERVER_HOST>ldap</LDAP_SERVER_HOST>
+                                    <LDAP_SEARCH_BASE>ou=People,dc=pass</LDAP_SEARCH_BASE>
+                                    <LDAP_BIND_DN>cn=admin,dc=pass</LDAP_BIND_DN>
+                                    <LDAP_BIND_PW>password</LDAP_BIND_PW>
+                                    <LDAP_QUERY_FILTER_USER>(&amp;(objectClass=posixAccount)(mail=%s))</LDAP_QUERY_FILTER_USER>
+                                    <LDAP_QUERY_FILTER_GROUP>(&amp;(objectClass=posixAccount)(mailGroupMember=%s))</LDAP_QUERY_FILTER_GROUP>
+                                    <LDAP_QUERY_FILTER_ALIAS>(&amp;(objectClass=posixAccount)(mailAlias=%s))</LDAP_QUERY_FILTER_ALIAS>
+                                    <LDAP_QUERY_FILTER_DOMAIN>(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))</LDAP_QUERY_FILTER_DOMAIN>
                                 </env>
                             </run>
                         </image>
