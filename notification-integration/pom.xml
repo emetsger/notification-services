@@ -155,6 +155,9 @@
                                         <volume>mailstate:/var/mail-state</volume>
                                     </bind>
                                 </volumes>
+                                <links>
+                                    <link>ldap</link>
+                                </links>
                                 <env>
                                     <HOSTNAME>mail</HOSTNAME>
                                     <DOMAINNAME>jhu.edu</DOMAINNAME>
