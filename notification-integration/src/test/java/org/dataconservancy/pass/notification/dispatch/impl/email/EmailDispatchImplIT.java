@@ -23,6 +23,7 @@ import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.notification.SimpleImapClientFactory;
 import org.dataconservancy.pass.notification.SpringBootIntegrationConfig;
 import org.dataconservancy.pass.notification.app.NotificationApp;
+import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.impl.Composer;
 import org.dataconservancy.pass.notification.impl.ComposerIT;
 import org.dataconservancy.pass.notification.model.Link;
@@ -34,7 +35,9 @@ import org.dataconservancy.pass.notification.util.async.Condition;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,9 +58,9 @@ import static java.util.Arrays.asList;
 import static org.apache.commons.io.IOUtils.resourceToString;
 import static org.dataconservancy.pass.notification.impl.Links.serialized;
 import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW_INVITE;
-import static org.dataconservancy.pass.notification.model.Notification.Param.LINKS;
 import static org.dataconservancy.pass.notification.model.Notification.Param.EVENT_METADATA;
 import static org.dataconservancy.pass.notification.model.Notification.Param.FROM;
+import static org.dataconservancy.pass.notification.model.Notification.Param.LINKS;
 import static org.dataconservancy.pass.notification.model.Notification.Param.RESOURCE_METADATA;
 import static org.dataconservancy.pass.notification.model.Notification.Param.TO;
 import static org.dataconservancy.pass.notification.model.Notification.Type.SUBMISSION_APPROVAL_INVITE;
@@ -65,6 +68,7 @@ import static org.dataconservancy.pass.notification.util.mail.SimpleImapClient.g
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -260,6 +264,41 @@ public class EmailDispatchImplIT {
         assertTrue(body.contains(event.getComment()));
         assertTrue(body.contains(expectedTitle));
         assertTrue(body.contains("Please review the submission at the following URL: " + link.getHref()));
+    }
+
+    /**
+     * mailing a non-existent email address should result in the appropriate exception
+     * (in coordination with a like-minded email relay)
+     */
+    @Test
+    public void nonExistentEmailAddress() {
+        String nonExistentRecipientAddress = "moo-thru@bar.edu";
+        SimpleNotification n = new SimpleNotification();
+        n.setType(SUBMISSION_APPROVAL_INVITE);
+        n.setSender(SENDER);
+        n.setRecipient(Collections.singleton("mailto:" + nonExistentRecipientAddress));
+
+        try {
+            underTest.dispatch(n);
+        } catch (Exception e) {
+            assertTrue(e instanceof DispatchException);
+            Throwable rootCause = e.getCause();
+            boolean sfeFound = false;
+            while (rootCause.getCause() != null) {
+                if (rootCause instanceof javax.mail.SendFailedException) {
+                        sfeFound = true;
+                        break;
+                }
+                rootCause = rootCause.getCause();
+            }
+
+            assertTrue("Missing expected javax.mail.SendFailedException in the stack trace.", sfeFound);
+            assertTrue("Expected the string 'Invalid Addresses' to be in the exception message.", rootCause.getMessage().contains("Invalid Addresses"));
+
+            return;
+        }
+
+        fail("Expected a DispatchException to be thrown.");
     }
 
     private static String packageAsPath() {
