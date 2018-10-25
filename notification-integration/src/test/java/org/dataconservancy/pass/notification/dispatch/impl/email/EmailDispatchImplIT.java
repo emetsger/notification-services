@@ -115,7 +115,7 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-//        n.setCc(Collections.singleton(CC));
+        n.setCc(Collections.singleton(CC));
         n.setRecipient(Collections.singleton("mailto:" + RECIPIENT));
 
         String messageId = underTest.dispatch(n);
@@ -128,7 +128,7 @@ public class EmailDispatchImplIT {
         assertEquals("Approval Invite Subject", message.getSubject());
         assertEquals(expectedBody, getBodyAsText(message));
         assertEquals(SENDER, message.getFrom()[0].toString());
-//        assertEquals(CC, message.getRecipients(Message.RecipientType.CC)[0].toString());
+        assertEquals(CC, message.getRecipients(Message.RecipientType.CC)[0].toString());
         assertEquals(RECIPIENT, message.getRecipients(Message.RecipientType.TO)[0].toString());
     }
 
