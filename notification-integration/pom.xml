@@ -78,7 +78,7 @@
                                 <portName>mail.smtp.port</portName>
                                 <portName>mail.imap.port</portName>
                                 <portName>mail.imaps.port</portName>
-                                <portName>mail.msp.tls.port</portName>
+                                <portName>mail.msp.port</portName>
                                 <portName>fcrepo.http.port</portName>
                                 <portName>fcrepo.jms.port</portName>
                                 <portName>fcrepo.stomp.port</portName>
@@ -149,7 +149,7 @@
                                     <port>${mail.smtp.port}:25</port>
                                     <port>${mail.imap.port}:143</port>
                                     <port>${mail.imaps.port}:993</port>
-                                    <port>${mail.msp.tls.port}:587</port>
+                                    <port>${mail.msp.port}:587</port>
                                 </ports>
                                 <volumes>
                                     <bind>
