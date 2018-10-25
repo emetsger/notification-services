@@ -205,11 +205,9 @@
                                     <FCREPO_PORT>${fcrepo.http.port}</FCREPO_PORT>
                                     <FCREPO_JMS_PORT>${fcrepo.jms.port}</FCREPO_JMS_PORT>
                                     <FCREPO_STOMP_PORT>${fcrepo.stomp.port}</FCREPO_STOMP_PORT>
-                                    <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml
-                                    </FCREPO_ACTIVEMQ_CONFIGURATION>
+                                    <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
                                     <FCREPO_LOG_LEVEL>DEBUG</FCREPO_LOG_LEVEL>
-                                    <FCREPO_JMS_BASEURL>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/
-                                    </FCREPO_JMS_BASEURL>
+                                    <FCREPO_JMS_BASEURL>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/</FCREPO_JMS_BASEURL>
                                 </env>
                             </run>
                         </image>
