@@ -146,8 +146,6 @@
                                 <hostname>mail</hostname>
                                 <domainname>local.domain</domainname>
                                 <ports>
-                                    <port>${mail.smtp.port}:25</port>
-                                    <port>${mail.imap.port}:143</port>
                                     <port>${mail.imaps.port}:993</port>
                                     <port>${mail.msp.port}:587</port>
                                 </ports>
