@@ -53,8 +53,8 @@
                 </property>
             </activation>
             <properties>
-                <mail.waitms>120000</mail.waitms>
-                <ldap.waitms>30000</ldap.waitms>
+                <mail.waitms>30000</mail.waitms>
+                <ldap.waitms>15000</ldap.waitms>
             </properties>
         </profile>
     </profiles>
