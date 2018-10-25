@@ -55,7 +55,7 @@ import static java.util.Arrays.asList;
 import static org.apache.commons.io.IOUtils.resourceToString;
 import static org.dataconservancy.pass.notification.impl.Links.serialized;
 import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW_INVITE;
-import static org.dataconservancy.pass.notification.model.Notification.Param.LINKS
+import static org.dataconservancy.pass.notification.model.Notification.Param.LINKS;
 import static org.dataconservancy.pass.notification.model.Notification.Param.EVENT_METADATA;
 import static org.dataconservancy.pass.notification.model.Notification.Param.FROM;
 import static org.dataconservancy.pass.notification.model.Notification.Param.RESOURCE_METADATA;
