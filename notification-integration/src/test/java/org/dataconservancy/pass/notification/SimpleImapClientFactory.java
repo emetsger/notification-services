@@ -73,13 +73,13 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
     @Override
     public SimpleImapClient getObject() throws Exception {
         try {
-            LOG.warn("Connecting to IMAP host '{}' store '{}@{}' with username '{}'",
+            LOG.trace("Connecting to IMAP host '{}' store '{}@{}' with username '{}'",
                     imapHost,
                     imapStore.getClass().getName(),
                     Integer.toHexString(System.identityHashCode(imapStore)),
                     imapUser);
             imapStore.connect(imapHost, imapUser, imapPass);
-            LOG.warn("Store '{}@{}' connected? '{}'",
+            LOG.trace("Store '{}@{}' connected? '{}'",
                     imapStore.getClass().getName(),
                     Integer.toHexString(System.identityHashCode(imapStore)),
                     imapStore.isConnected());
