@@ -72,19 +72,21 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
 
     @Override
     public SimpleImapClient getObject() throws Exception {
-        try {
-            LOG.trace("Connecting to IMAP host '{}' store '{}@{}' with username '{}'",
-                    imapHost,
-                    imapStore.getClass().getName(),
-                    Integer.toHexString(System.identityHashCode(imapStore)),
-                    imapUser);
-            imapStore.connect(imapHost, imapUser, imapPass);
-            LOG.trace("Store '{}@{}' connected? '{}'",
-                    imapStore.getClass().getName(),
-                    Integer.toHexString(System.identityHashCode(imapStore)),
-                    imapStore.isConnected());
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
+        if (!imapStore.isConnected()) {
+            try {
+                LOG.trace("Connecting to IMAP host '{}' store '{}@{}' with username '{}'",
+                        imapHost,
+                        imapStore.getClass().getName(),
+                        Integer.toHexString(System.identityHashCode(imapStore)),
+                        imapUser);
+                imapStore.connect(imapHost, imapUser, imapPass);
+                LOG.trace("Store '{}@{}' connected? '{}'",
+                        imapStore.getClass().getName(),
+                        Integer.toHexString(System.identityHashCode(imapStore)),
+                        imapStore.isConnected());
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return new SimpleImapClient(session, imapStore);
     }
