@@ -100,7 +100,7 @@
         <javamail.version>1.6.2</javamail.version>
         <aspectjrt.version>1.9.1</aspectjrt.version>
 
-        <docker.fcrepo.version>oapass/fcrepo:4.7.5-3.1</docker.fcrepo.version>
+        <docker.fcrepo.version>oapass/fcrepo:4.7.5-3.1-1</docker.fcrepo.version>
         <docker.indexer.version>oapass/indexer:0.0.15-3.1-SNAPSHOT</docker.indexer.version>
         <docker.elasticsearch.version>docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3</docker.elasticsearch.version>
         <docker.tvial.docker-mailserver.version>oapass/docker-mailserver:20181029</docker.tvial.docker-mailserver.version>
