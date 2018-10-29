@@ -15,6 +15,7 @@
  */
 package org.dataconservancy.pass.notification.impl;
 
+import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,9 @@ public class NotificationServiceErrorHandler implements ErrorHandler {
 
     @Override
     public void handleError(Throwable throwable) {
-        LOG.error("Encountered an unrecoverable error: {}", throwable.getMessage(), throwable);
+        if (!(throwable instanceof DispatchException)) {
+            LOG.error("Encountered an unrecoverable error: {}", throwable.getMessage(), throwable);
+        }
     }
 
 }
