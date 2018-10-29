@@ -21,6 +21,7 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.helper.ConditionalHelpers;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientDefault;
+import org.dataconservancy.pass.notification.dispatch.DispatchService;
 import org.dataconservancy.pass.notification.dispatch.impl.email.CompositeResolver;
 import org.dataconservancy.pass.notification.dispatch.impl.email.EmailComposer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.EmailDispatchImpl;
@@ -31,6 +32,7 @@ import org.dataconservancy.pass.notification.dispatch.impl.email.SpringUriTempla
 import org.dataconservancy.pass.notification.dispatch.impl.email.TemplateParameterizer;
 import org.dataconservancy.pass.notification.dispatch.impl.email.TemplateResolver;
 import org.dataconservancy.pass.notification.impl.Composer;
+import org.dataconservancy.pass.notification.impl.DefaultNotificationService;
 import org.dataconservancy.pass.notification.impl.LinkValidator;
 import org.dataconservancy.pass.notification.impl.RecipientAnalyzer;
 import org.dataconservancy.pass.notification.impl.SimpleWhitelist;
@@ -250,4 +252,8 @@ public class SpringBootNotificationConfig {
         return new Composer(notificationConfig, recipientAnalyzer, sla, lv, objectMapper);
     }
 
+    @Bean
+    public DefaultNotificationService notificationService(PassClient passClient, Composer composer, DispatchService dispatchService) {
+        return new DefaultNotificationService(passClient, dispatchService, composer);
+    }
 }
