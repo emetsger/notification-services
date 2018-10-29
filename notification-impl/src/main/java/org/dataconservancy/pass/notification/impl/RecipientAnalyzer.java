@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -44,6 +45,7 @@ public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent
     private Function<Collection<String>, Collection<String>> whitelist;
 
     public RecipientAnalyzer(Function<Collection<String>, Collection<String>> whitelist) {
+        Objects.requireNonNull(whitelist, "Whitelist must not be null!");
         this.whitelist = whitelist;
     }
 
