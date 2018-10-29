@@ -100,8 +100,8 @@ public class JmsConfig {
             return;
         }
 
-        if (!resourceType.equals(Constants.PassType.SUBMISSION_EVENT_RESOURCE) ||
-                !eventType.equals(Constants.JmsFcrepoEvent.RESOURCE_CREATION)) {
+        if (!resourceType.contains(Constants.PassType.SUBMISSION_EVENT_RESOURCE) ||
+                !eventType.contains(Constants.JmsFcrepoEvent.RESOURCE_CREATION)) {
             try {
                 LOG.trace("Discarding message {}, resource type {}, event type {}", id,
                         resourceType, eventType);
