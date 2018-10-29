@@ -18,6 +18,7 @@
 
 package org.dataconservancy.pass.notification.app.config;
 
+import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.impl.NotificationService;
 import org.dataconservancy.pass.notification.impl.NotificationServiceErrorHandler;
 import org.dataconservancy.pass.notification.model.config.Mode;
@@ -119,14 +120,16 @@ public class JmsConfig {
 
         LOG.trace("Processing notification for {}", eventUri);
 
-        notificationService.notify(eventUri);
-
         try {
-            jmsMessage.acknowledge();
-        } catch (JMSException e) {
-            LOG.warn("Error acknowledging JMS message {}: {}", id, e.getMessage(), e);
+            notificationService.notify(eventUri);
+        } finally {
+            try {
+                // TODO maybe retry in the case of a transient email failure, otherwise we loose the message
+                jmsMessage.acknowledge();
+            } catch (JMSException e) {
+                LOG.warn("Error acknowledging JMS message {}: {}", id, e.getMessage(), e);
+            }
         }
-
     }
 
 }
