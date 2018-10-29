@@ -15,9 +15,11 @@
  */
 package org.dataconservancy.pass.notification.util.async;
 
+import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.mail.Message;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -115,6 +117,16 @@ public class Condition<T> {
         this.condition = condition;
         this.verificationFunc = verificationFunc;
         this.name = name;
+    }
+
+    public static Condition<Message> newMessageCondition(String messageId, SimpleImapClient imapClient) {
+        Condition<Message> c = new Condition<>(getMessage(messageId, imapClient), Objects::nonNull, "New message");
+        c.setTimeoutThresholdMs(10000);
+        return c;
+    }
+
+    public static Callable<Message> getMessage(String messageId, SimpleImapClient imapClient) {
+        return () -> imapClient.getMessage(messageId);
     }
 
     /**

@@ -35,9 +35,7 @@ import org.dataconservancy.pass.notification.util.async.Condition;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +48,6 @@ import javax.mail.Message;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Objects;
-import java.util.concurrent.Callable;
 
 import static java.nio.charset.Charset.forName;
 import static java.util.Arrays.asList;
@@ -64,6 +60,7 @@ import static org.dataconservancy.pass.notification.model.Notification.Param.LIN
 import static org.dataconservancy.pass.notification.model.Notification.Param.RESOURCE_METADATA;
 import static org.dataconservancy.pass.notification.model.Notification.Param.TO;
 import static org.dataconservancy.pass.notification.model.Notification.Type.SUBMISSION_APPROVAL_INVITE;
+import static org.dataconservancy.pass.notification.util.PathUtil.packageAsPath;
 import static org.dataconservancy.pass.notification.util.mail.SimpleImapClient.getBodyAsText;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -125,8 +122,8 @@ public class EmailDispatchImplIT {
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
 
-        newMessageCondition(messageId, imapClient).await();
-        Message message = getMessage(messageId, imapClient).call();
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
         assertEquals("Approval Invite Subject", message.getSubject());
@@ -152,8 +149,8 @@ public class EmailDispatchImplIT {
 
         String messageId = underTest.dispatch(n);
 
-        newMessageCondition(messageId, imapClient).await();
-        Message message = getMessage(messageId, imapClient).call();
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
 
         assertEquals(RECIPIENT, message.getRecipients(Message.RecipientType.TO)[0].toString());
     }
@@ -191,8 +188,8 @@ public class EmailDispatchImplIT {
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
 
-        newMessageCondition(messageId, imapClient).await();
-        Message message = getMessage(messageId, imapClient).call();
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
         assertEquals("Handlebars Subject", message.getSubject());
@@ -249,8 +246,8 @@ public class EmailDispatchImplIT {
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
 
-        newMessageCondition(messageId, imapClient).await();
-        Message message = getMessage(messageId, imapClient).call();
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
         String expectedTitle = objectMapper.readTree(submission.getMetadata()).findValue("title").asText();
@@ -301,21 +298,4 @@ public class EmailDispatchImplIT {
         fail("Expected a DispatchException to be thrown.");
     }
 
-    private static String packageAsPath() {
-        return packageAsPath(EmailDispatchImplIT.class);
-    }
-
-    private static String packageAsPath(Class<?> clazz) {
-        return clazz.getPackage().getName().replace('.', '/');
-    }
-
-    private static Condition<Message> newMessageCondition(String messageId, SimpleImapClient imapClient) {
-        Condition<Message> c = new Condition<>(getMessage(messageId, imapClient), Objects::nonNull, "New message");
-        c.setTimeoutThresholdMs(10000);
-        return c;
-    }
-
-    private static Callable<Message> getMessage(String messageId, SimpleImapClient imapClient) {
-        return () -> imapClient.getMessage(messageId);
-    }
 }
