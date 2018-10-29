@@ -88,8 +88,11 @@ public class JmsConfig {
                                          Message<String> message,
                                          javax.jms.Message jmsMessage) {
 
+        LOG.trace("Receiving message: {}", id);
+
         if (Mode.DISABLED == config.getMode()) {
             try {
+                LOG.trace("Discarding message {}, mode is {}", id, config.getMode());
                 jmsMessage.acknowledge();
             } catch (JMSException e) {
                 LOG.warn("Error acknowledging JMS message {}: {}", id, e.getMessage(), e);
@@ -100,6 +103,8 @@ public class JmsConfig {
         if (!resourceType.equals(Constants.PassType.SUBMISSION_EVENT_RESOURCE) ||
                 !eventType.equals(Constants.JmsFcrepoEvent.RESOURCE_CREATION)) {
             try {
+                LOG.trace("Discarding message {}, resource type {}, event type {}", id,
+                        resourceType, eventType);
                 jmsMessage.acknowledge();
             } catch (JMSException e) {
                 LOG.warn("Error acknowledging JMS message {}: {}", id, e.getMessage(), e);
@@ -107,7 +112,13 @@ public class JmsConfig {
             return;
         }
 
+        LOG.trace("Processing message {}, resource type {}, event type {}", id,
+                resourceType, eventType);
+
         String eventUri = jsonParser.parseId(message.getPayload().getBytes());
+
+        LOG.trace("Processing notification for {}", eventUri);
+
         notificationService.notify(eventUri);
 
         try {
