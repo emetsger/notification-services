@@ -19,6 +19,7 @@
 package org.dataconservancy.pass.notification.app.config;
 
 import org.dataconservancy.pass.notification.impl.NotificationService;
+import org.dataconservancy.pass.notification.impl.NotificationServiceErrorHandler;
 import org.dataconservancy.pass.notification.model.config.Mode;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
 import org.dataconservancy.pass.support.messaging.constants.Constants;
@@ -70,7 +71,7 @@ public class JmsConfig {
                                                                           @Value("${spring.jms.listener.auto-startup}")
                                                                                   boolean autoStart,
                                                                           ConnectionFactory connectionFactory,
-                                                                          ErrorHandler errorHandler) {
+                                                                          NotificationServiceErrorHandler errorHandler) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
         factory.setErrorHandler(errorHandler);
