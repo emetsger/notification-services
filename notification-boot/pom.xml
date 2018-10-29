@@ -134,6 +134,18 @@
       </dependency>
 
       <dependency>
+        <groupId>org.apache.activemq</groupId>
+        <artifactId>activemq-broker</artifactId>
+        <scope>runtime</scope>
+        <exclusions>
+          <exclusion>
+            <artifactId>geronimo-jms_1.1_spec</artifactId>
+            <groupId>org.apache.geronimo.specs</groupId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
         <groupId>org.dataconservancy.pass.notify</groupId>
         <artifactId>dispatch-api</artifactId>
         <version>${project.parent.version}</version>
