@@ -56,6 +56,12 @@ public class SimpleImapClientFactoryConfiguration {
     @Value("${mail.imap.finalizecleanclose}")
     private boolean closeOnFinalize;
 
+    @Value("${mail.imap.connectiontimeout}")
+    private int connectTimeout;
+
+    @Value("${mail.imap.timeout}")
+    private int timeout;
+
     @Bean
     public Session mailSession() {
         return Session.getDefaultInstance(new Properties() {
@@ -66,6 +72,8 @@ public class SimpleImapClientFactoryConfiguration {
                 put("mail.imap.ssl.trust", sslTrust);
                 put("mail.imap.starttls.enable", enableTlsIfSupported);
                 put("mail.imap.finalizecleanclose", closeOnFinalize);
+                put("mail.imap.connectiontimeout", connectTimeout);
+                put("mail.imap.timeout", timeout);
             }
         });
     }

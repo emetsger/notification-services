@@ -111,6 +111,8 @@
                         <mail.imap.ssl.trust>*</mail.imap.ssl.trust>
                         <mail.imap.starttls.enable>true</mail.imap.starttls.enable>
                         <mail.imap.finalizecleanclose>false</mail.imap.finalizecleanclose>
+                        <mail.imap.connectiontimeout>10000</mail.imap.connectiontimeout>
+                        <mail.imap.timeout>10000</mail.imap.timeout>
 
                         <!-- Default username / password when connecting to IMAP -->
                         <!-- Override by setting the desired credentials on the SimpleImapClientFactory -->
