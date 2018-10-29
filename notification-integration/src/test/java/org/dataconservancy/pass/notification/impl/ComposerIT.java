@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
-import org.dataconservancy.pass.notification.app.NotificationApp;
+import org.dataconservancy.pass.notification.NotificationApp;
 import org.dataconservancy.pass.notification.model.Link;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.Mode;

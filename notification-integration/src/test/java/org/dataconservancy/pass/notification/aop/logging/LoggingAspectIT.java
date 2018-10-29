@@ -15,7 +15,7 @@
  */
 package org.dataconservancy.pass.notification.aop.logging;
 
-import org.dataconservancy.pass.notification.app.NotificationApp;
+import org.dataconservancy.pass.notification.NotificationApp;
 import org.dataconservancy.pass.notification.dispatch.DispatchService;
 import org.junit.Test;
 import org.junit.runner.RunWith;

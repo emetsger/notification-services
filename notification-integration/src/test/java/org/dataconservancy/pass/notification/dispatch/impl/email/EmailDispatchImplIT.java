@@ -22,7 +22,7 @@ import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.notification.SimpleImapClientFactory;
 import org.dataconservancy.pass.notification.SpringBootIntegrationConfig;
-import org.dataconservancy.pass.notification.app.NotificationApp;
+import org.dataconservancy.pass.notification.NotificationApp;
 import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.impl.Composer;
 import org.dataconservancy.pass.notification.impl.ComposerIT;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataconservancy.pass.notification.app;
+package org.dataconservancy.pass.notification.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

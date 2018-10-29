@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataconservancy.pass.notification.app;
+package org.dataconservancy.pass.notification;
 
+import org.dataconservancy.pass.notification.app.config.JmsConfig;
 import org.dataconservancy.pass.notification.app.config.SpringBootNotificationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
@@ -34,8 +35,8 @@ import java.util.Properties;
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 @SpringBootApplication
-@ComponentScan("org.dataconservancy.pass")
 @Import(SpringBootNotificationConfig.class)
+@ComponentScan("org.dataconservancy.pass")
 @EnableAspectJAutoProxy
 public class NotificationApp {
 
@@ -79,7 +80,11 @@ public class NotificationApp {
             }
         }
 
-        SpringApplication.run(NotificationApp.class, args);
+        SpringApplicationBuilder appBuilder = new SpringApplicationBuilder();
+        appBuilder.main(NotificationApp.class)
+                .sources(NotificationApp.class, JmsConfig.class)
+                .run(args);
+
     }
 
 }
