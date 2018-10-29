@@ -22,6 +22,8 @@ import org.dataconservancy.pass.notification.model.config.template.NotificationT
 import org.simplejavamail.email.Email;
 import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.email.EmailPopulatingBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
@@ -34,6 +36,8 @@ import static org.dataconservancy.pass.notification.dispatch.impl.email.Recipien
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 public class EmailComposer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EmailComposer.class);
 
     private PassClient passClient;
 
@@ -63,8 +67,16 @@ public class EmailComposer {
                         templates.getOrDefault(NotificationTemplate.Name.FOOTER, "")));
 
         // builder refuses to build the cc with an empty collection
-        if (n.getCc() != null && !n.getCc().isEmpty()) {
-            builder.cc(String.join(",", n.getCc()));
+        if (n.getCc() != null && n.getCc().size() > 0) {
+            // A configuration with a non-existent "${pass.notification.demo.global.cc.address}" property will
+            // result in a list with one element, an empty string.  Filter out any empty string values before
+            // continuing
+            String filtered = n.getCc().stream()
+                    .filter(ccAddress -> ccAddress.length() > 0)
+                    .collect(Collectors.joining(","));
+            if (filtered.length() > 0) {
+                builder.cc(filtered);
+            }
         }
 
         return builder.buildEmail();
