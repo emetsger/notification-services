@@ -61,6 +61,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.dataconservancy.pass.notify</groupId>
             <artifactId>dispatch-api</artifactId>
             <version>${project.parent.version}</version>
