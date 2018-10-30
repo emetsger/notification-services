@@ -38,7 +38,7 @@
         <appender-ref ref="STDERR"/>
     </logger>
     <logger name="org.dataconservancy.pass.notification" additivity="false"
-            level="${org.dataconservancy.pass.notification.level:-WARN}">
+            level="${org.dataconservancy.pass.notification.level:-INFO}">
         <appender-ref ref="STDERR"/>
     </logger>
     <logger name="NOTIFICATION_LOG" additivity="false" level="${org.dataconservancy.pass.notification.level:-INFO}">
