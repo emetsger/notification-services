@@ -115,6 +115,7 @@
         <mail.server>${docker.host.address}</mail.server>
         <mail.waitms>30000</mail.waitms>
         <fcrepo.server>${docker.host.address}</fcrepo.server>
+        <jms.host>${docker.host.address}</jms.host>
         <es.server>${docker.host.address}</es.server>
         <pass.fedora.user>fedoraAdmin</pass.fedora.user>
         <pass.fedora.password>moo</pass.fedora.password>
@@ -184,6 +185,8 @@
                             <pass.elasticsearch.url>${pass.elasticsearch.url}</pass.elasticsearch.url>
                             <pass.elasticsearch.limit>${pass.elasticsearch.limit}</pass.elasticsearch.limit>
                             <fcrepo.host>${fcrepo.server}</fcrepo.host>
+                            <jms.host>${jms.host}</jms.host>
+                            <jms.port>${jms.port}</jms.port>
                             <es.host>${es.server}</es.host>
                             <es.port>${es.http.port}</es.port>
                             <pass.notification.smtp.host>${mail.server}</pass.notification.smtp.host>
@@ -234,10 +237,8 @@
                                     <portName>mail.imaps.port</portName>
                                     <portName>mail.msp.port</portName>
                                     <portName>fcrepo.http.port</portName>
-                                    <portName>fcrepo.jms.port</portName>
-                                    <portName>fcrepo.stomp.port</portName>
+                                    <portName>jms.port</portName>
                                     <portName>es.http.port</portName>
-                                    <!--<portName>activemq.jms.port</portName>-->
                                 </portNames>
                             </configuration>
                         </execution>
@@ -336,14 +337,12 @@
                                     </wait>
                                     <ports>
                                         <port>${fcrepo.http.port}:${fcrepo.http.port}</port>
-                                        <port>${fcrepo.jms.port}:${fcrepo.jms.port}</port>
-                                        <port>${fcrepo.stomp.port}:${fcrepo.stomp.port}</port>
+                                        <port>${jms.port}:${jms.port}</port>
                                     </ports>
                                     <env>
                                         <FCREPO_HOST>fcrepo</FCREPO_HOST>
                                         <FCREPO_PORT>${fcrepo.http.port}</FCREPO_PORT>
-                                        <FCREPO_JMS_PORT>${fcrepo.jms.port}</FCREPO_JMS_PORT>
-                                        <FCREPO_STOMP_PORT>${fcrepo.stomp.port}</FCREPO_STOMP_PORT>
+                                        <FCREPO_JMS_PORT>${jms.port}</FCREPO_JMS_PORT>
                                         <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
                                         <FCREPO_LOG_LEVEL>DEBUG</FCREPO_LOG_LEVEL>
                                         <FCREPO_JMS_BASEURL>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/</FCREPO_JMS_BASEURL>
@@ -361,20 +360,6 @@
                                     </wait>
                                 </run>
                             </image>
-
-                            <!--<image>-->
-                                <!--<alias>activemq</alias>-->
-                                <!--<name>${docker.activemq.version}</name>-->
-                                <!--<run>-->
-                                    <!--<skip>${activemq.skip}</skip>-->
-                                    <!--<wait>-->
-                                        <!--<time>${activemq.waitms}</time>-->
-                                    <!--</wait>-->
-                                    <!--<ports>-->
-                                        <!--<port>${activemq.jms.port}:${activemq.jms.port}</port>-->
-                                    <!--</ports>-->
-                                <!--</run>-->
-                            <!--</image>-->
 
                         </images>
 

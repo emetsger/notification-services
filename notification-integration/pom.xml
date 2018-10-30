@@ -97,7 +97,7 @@
                                 <argument>--pass.link.scheme=https</argument>
                                 <argument>--pass.link.host=pass.local</argument>
                                 <argument>--fcrepo.host=${fcrepo.server}</argument>
-                                <argument>--fcrepo.jms.port=${fcrepo.jms.port}</argument>
+                                <argument>--spring.activemq.broker-url=tcp://${jms.host}:${jms.port}</argument>
                                 <argument>--es.host=${es.server}</argument>
                                 <argument>--es.port=${es.http.port}</argument>
                                 <argument>--mail.imap.host=${mail.imap.host}</argument>
