@@ -28,22 +28,6 @@
     <artifactId>notification-integration</artifactId>
     <name>Notification Services Integration</name>
 
-    <properties>
-        <mail.skip>false</mail.skip>
-        <fcrepo.skip>false</fcrepo.skip>
-        <ldap.skip>false</ldap.skip>
-        <ldap.waitms>5000</ldap.waitms>
-        <mail.server>${docker.host.address}</mail.server>
-        <mail.waitms>15000</mail.waitms>
-        <fcrepo.server>${docker.host.address}</fcrepo.server>
-        <es.server>${docker.host.address}</es.server>
-        <pass.fedora.user>fedoraAdmin</pass.fedora.user>
-        <pass.fedora.password>moo</pass.fedora.password>
-        <pass.fedora.baseurl>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/</pass.fedora.baseurl>
-        <pass.elasticsearch.host>${es.server}</pass.elasticsearch.host>
-        <pass.elasticsearch.url>http://${pass.elasticsearch.host}:${es.http.port}/pass/</pass.elasticsearch.url>
-    </properties>
-
     <profiles>
         <profile>
             <id>travis</id>
@@ -66,182 +50,71 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>reserve-network-port</id>
-                        <goals>
-                            <goal>reserve-network-port</goal>
-                        </goals>
-                        <phase>process-resources</phase>
-                        <configuration>
-                            <portNames>
-                                <portName>mail.smtp.port</portName>
-                                <portName>mail.imap.port</portName>
-                                <portName>mail.imaps.port</portName>
-                                <portName>mail.msp.port</portName>
-                                <portName>fcrepo.http.port</portName>
-                                <portName>fcrepo.jms.port</portName>
-                                <portName>fcrepo.stomp.port</portName>
-                                <portName>es.http.port</portName>
-                            </portNames>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <systemProperties>
-                        <pass.fedora.user>${pass.fedora.user}</pass.fedora.user>
-                        <pass.fedora.password>${pass.fedora.password}</pass.fedora.password>
-                        <pass.fedora.baseurl>${pass.fedora.baseurl}</pass.fedora.baseurl>
-                        <pass.elasticsearch.url>${pass.elasticsearch.url}</pass.elasticsearch.url>
-                        <fcrepo.host>${fcrepo.server}</fcrepo.host>
-                        <es.host>${es.server}</es.host>
-                        <es.port>${es.http.port}</es.port>
-                        <pass.notification.smtp.host>${mail.server}</pass.notification.smtp.host>
-                        <pass.notification.smtp.port>${mail.msp.port}</pass.notification.smtp.port>
-
-                        <!-- IMAP properties for ITs -->
-                        <mail.imap.host>${mail.server}</mail.imap.host>
-                        <mail.imap.port>${mail.imaps.port}</mail.imap.port>
-                        <mail.imap.ssl.enable>true</mail.imap.ssl.enable>
-                        <mail.imap.ssl.trust>*</mail.imap.ssl.trust>
-                        <mail.imap.starttls.enable>true</mail.imap.starttls.enable>
-                        <mail.imap.finalizecleanclose>false</mail.imap.finalizecleanclose>
-                        <mail.imap.connectiontimeout>10000</mail.imap.connectiontimeout>
-                        <mail.imap.timeout>10000</mail.imap.timeout>
-
-                        <!-- Default username / password when connecting to IMAP -->
-                        <!-- Override by setting the desired credentials on the SimpleImapClientFactory -->
-                        <mail.imap.user>staffwithnogrants@jhu.edu</mail.imap.user>
-                        <mail.imap.password>moo</mail.imap.password>
-                    </systemProperties>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
                 <configuration>
-
-                    <images>
-
-                        <image>
-                            <alias>mail</alias>
-                            <name>${docker.tvial.docker-mailserver.version}</name>
-                            <run>
-                                <wait>
-                                    <time>${mail.waitms}</time>
-                                </wait>
-                                <skip>${mail.skip}</skip>
-                                <hostname>mail</hostname>
-                                <domainname>local.domain</domainname>
-                                <ports>
-                                    <port>${mail.imaps.port}:993</port>
-                                    <port>${mail.msp.port}:587</port>
-                                </ports>
-                                <volumes>
-                                    <bind>
-                                        <volume>maildata:/var/mail</volume>
-                                        <volume>mailstate:/var/mail-state</volume>
-                                    </bind>
-                                </volumes>
-                                <links>
-                                    <link>ldap</link>
-                                </links>
-                                <env>
-                                    <HOSTNAME>mail</HOSTNAME>
-                                    <DOMAINNAME>jhu.edu</DOMAINNAME>
-                                    <DMS_DEBUG>0</DMS_DEBUG>
-                                    <ONE_DIR>1</ONE_DIR>
-                                    <SMTP_ONLY>0</SMTP_ONLY>
-                                    <PERMIT_DOCKER>network</PERMIT_DOCKER>
-                                    <OVERRIDE_HOSTNAME>mail.jhu.edu</OVERRIDE_HOSTNAME>
-                                    <TLS_LEVEL>intermediate</TLS_LEVEL>
-                                    <ENABLE_SPAMASSASSIN>0</ENABLE_SPAMASSASSIN>
-                                    <ENABLE_CLAMAV>0</ENABLE_CLAMAV>
-                                    <ENABLE_FAIL2BAN>0</ENABLE_FAIL2BAN>
-                                    <ENABLE_POSTGREY>0</ENABLE_POSTGREY>
-                                    <ENABLE_SASLAUTHD>0</ENABLE_SASLAUTHD>
-                                    <POSTMASTER_ADDRESS>root</POSTMASTER_ADDRESS>
-                                    <ENABLE_LDAP>1</ENABLE_LDAP>
-                                    <LDAP_SERVER_HOST>ldap</LDAP_SERVER_HOST>
-                                    <LDAP_SEARCH_BASE>ou=People,dc=pass</LDAP_SEARCH_BASE>
-                                    <LDAP_BIND_DN>cn=admin,dc=pass</LDAP_BIND_DN>
-                                    <LDAP_BIND_PW>password</LDAP_BIND_PW>
-                                    <LDAP_QUERY_FILTER_USER>(&amp;(objectClass=posixAccount)(mail=%s))</LDAP_QUERY_FILTER_USER>
-                                    <LDAP_QUERY_FILTER_GROUP>(&amp;(objectClass=posixAccount)(mailGroupMember=%s))</LDAP_QUERY_FILTER_GROUP>
-                                    <LDAP_QUERY_FILTER_ALIAS>(&amp;(objectClass=posixAccount)(mailAlias=%s))</LDAP_QUERY_FILTER_ALIAS>
-                                    <LDAP_QUERY_FILTER_DOMAIN>(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))</LDAP_QUERY_FILTER_DOMAIN>
-                                </env>
-                            </run>
-                        </image>
-
-                        <image>
-                            <alias>fcrepo</alias>
-                            <name>${docker.fcrepo.version}</name>
-                            <run>
-                                <skip>${fcrepo.skip}</skip>
-                                <wait>
-                                    <!-- Should use ${pass.fedora.baseurl}, but need to add authentication params to the URL -->
-                                    <url>
-                                        http://${pass.fedora.user}:${pass.fedora.password}@${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/
-                                    </url>
-                                    <time>180000</time>
-                                </wait>
-                                <ports>
-                                    <port>${fcrepo.http.port}:${fcrepo.http.port}</port>
-                                    <port>${fcrepo.jms.port}:${fcrepo.jms.port}</port>
-                                    <port>${fcrepo.stomp.port}:${fcrepo.stomp.port}</port>
-                                </ports>
-                                <env>
-                                    <FCREPO_HOST>fcrepo</FCREPO_HOST>
-                                    <FCREPO_PORT>${fcrepo.http.port}</FCREPO_PORT>
-                                    <FCREPO_JMS_PORT>${fcrepo.jms.port}</FCREPO_JMS_PORT>
-                                    <FCREPO_STOMP_PORT>${fcrepo.stomp.port}</FCREPO_STOMP_PORT>
-                                    <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
-                                    <FCREPO_LOG_LEVEL>DEBUG</FCREPO_LOG_LEVEL>
-                                    <FCREPO_JMS_BASEURL>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/</FCREPO_JMS_BASEURL>
-                                </env>
-                            </run>
-                        </image>
-
-                        <image>
-                            <alias>ldap</alias>
-                            <name>${docker.ldap.version}</name>
-                            <run>
-                                <skip>${ldap.skip}</skip>
-                                <wait>
-                                    <time>${ldap.waitms}</time>
-                                </wait>
-                            </run>
-                        </image>
-
-                    </images>
-
+                    <classifier>exec</classifier>
+                    <attach>true</attach>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>start-docker-its</id>
-                        <phase>pre-integration-test</phase>
+                        <id>pre-integration-test</id>
                         <goals>
                             <goal>start</goal>
                         </goals>
+                        <configuration>
+                            <useTestClasspath>false</useTestClasspath>
+                            <mainClass>org.dataconservancy.pass.notification.NotificationApp</mainClass>
+                            <arguments>
+                                <argument>--pass.fedora.user=${pass.fedora.user}</argument>
+                                <argument>--pass.fedora.password=${pass.fedora.password}</argument>
+                                <argument>--pass.fedora.baseurl=${pass.fedora.baseurl}</argument>
+                                <argument>--pass.elasticsearch.url=${pass.elasticsearch.url}</argument>
+                                <argument>--pass.notification.mode=DEMO</argument>
+                                <argument>--pass.notification.demo.from.address=noreply@pass.jh.edu</argument>
+                                <argument>--pass.notification.demo.global.cc.address=notification-demo-cc@jhu.edu</argument>
+                                <argument>--pass.notification.production.from.address=noreply@pass.jh.edu</argument>
+                                <argument>--pass.notification.production.global.cc.address=notification-prod-cc@jhu.edu</argument>
+                                <argument>--pass.notification.configuration=classpath:/notification.json</argument>
+                                <argument>--pass.notification.smtp.host=${mail.server}</argument>
+                                <argument>--pass.notification.smtp.port=${mail.msp.port}</argument>
+                                <argument>--pass.notification.queue.event.name=event</argument>
+                                <argument>--pass.link.usertoken.generator.key=BETKPFHWGGDIEWIIYKYQ33LUS4</argument>
+                                <argument>--pass.link.scheme=https</argument>
+                                <argument>--pass.link.host=pass.local</argument>
+                                <argument>--fcrepo.host=${fcrepo.server}</argument>
+                                <argument>--fcrepo.jms.port=${fcrepo.jms.port}</argument>
+                                <argument>--es.host=${es.server}</argument>
+                                <argument>--es.port=${es.http.port}</argument>
+                                <argument>--mail.imap.host=${mail.imap.host}</argument>
+                                <argument>--mail.imap.user=${mail.imap.user}</argument>
+                                <argument>--mail.imap.password=${mail.imap.password}</argument>
+                                <argument>--mail.imap.port=${mail.imap.port}</argument>
+                                <argument>--mail.imap.ssl.enable=${mail.imap.ssl.enable}</argument>
+                                <argument>--mail.imap.ssl.trust=${mail.imap.ssl.trust}</argument>
+                                <argument>--mail.imap.starttls.enable=${mail.imap.starttls.enable}</argument>
+                                <argument>--mail.imap.finalizecleanclose=${mail.imap.finalizecleanclose}</argument>
+                                <argument>--mail.imap.connectiontimeout=${mail.imap.connectiontimeout}</argument>
+                                <argument>--mail.imap.timeout=${mail.imap.timeout}</argument>
+                            </arguments>
+                        </configuration>
                     </execution>
                     <execution>
-                        <id>stop-docker-its</id>
-                        <phase>post-integration-test</phase>
+                        <id>post-integration-test</id>
                         <goals>
                             <goal>stop</goal>
                         </goals>
@@ -257,9 +130,8 @@
 
         <dependency>
             <groupId>org.dataconservancy.pass.notify</groupId>
-            <artifactId>logging-aop</artifactId>
+            <artifactId>notification-boot</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -267,20 +139,7 @@
             <artifactId>notification-boot</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.dataconservancy.pass.notify</groupId>
-            <artifactId>dispatch-impl</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.dataconservancy.pass.notify</groupId>
-            <artifactId>dispatch-api</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>test</scope>
+            <type>test-jar</type>
         </dependency>
 
         <dependency>
@@ -298,12 +157,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
             <scope>test</scope>
         </dependency>
 

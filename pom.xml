@@ -108,6 +108,37 @@
 
         <pass.jsonld.context>https://oa-pass.github.io/pass-data-model/src/main/resources/context-3.1.jsonld</pass.jsonld.context>
 
+        <mail.skip>false</mail.skip>
+        <fcrepo.skip>false</fcrepo.skip>
+        <ldap.skip>false</ldap.skip>
+        <ldap.waitms>10000</ldap.waitms>
+        <mail.server>${docker.host.address}</mail.server>
+        <mail.waitms>30000</mail.waitms>
+        <fcrepo.server>${docker.host.address}</fcrepo.server>
+        <es.server>${docker.host.address}</es.server>
+        <pass.fedora.user>fedoraAdmin</pass.fedora.user>
+        <pass.fedora.password>moo</pass.fedora.password>
+        <pass.fedora.baseurl>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/</pass.fedora.baseurl>
+        <pass.elasticsearch.host>${es.server}</pass.elasticsearch.host>
+        <pass.elasticsearch.url>http://${pass.elasticsearch.host}:${es.http.port}/pass/</pass.elasticsearch.url>
+        <pass.elasticsearch.limit>100</pass.elasticsearch.limit>
+        <http.agent>notification-services/x.y.x</http.agent>
+
+        <!-- IMAP properties for ITs -->
+        <mail.imap.host>${mail.server}</mail.imap.host>
+        <!-- build-helper plugin defines mail.imaps.port -->
+        <mail.imap.port>${mail.imaps.port}</mail.imap.port>
+        <mail.imap.ssl.enable>true</mail.imap.ssl.enable>
+        <mail.imap.ssl.trust>*</mail.imap.ssl.trust>
+        <mail.imap.starttls.enable>true</mail.imap.starttls.enable>
+        <mail.imap.finalizecleanclose>false</mail.imap.finalizecleanclose>
+        <mail.imap.connectiontimeout>30000</mail.imap.connectiontimeout>
+        <mail.imap.timeout>30000</mail.imap.timeout>
+
+        <!-- Default username / password when connecting to IMAP -->
+        <!-- Override by setting the desired credentials on the SimpleImapClientFactory -->
+        <mail.imap.user>staffwithnogrants@jhu.edu</mail.imap.user>
+        <mail.imap.password>moo</mail.imap.password>
     </properties>
 
     <build>
@@ -145,12 +176,72 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven.failsafe.plugin.version}</version>
+                    <configuration>
+                        <systemProperties>
+                            <pass.fedora.user>${pass.fedora.user}</pass.fedora.user>
+                            <pass.fedora.password>${pass.fedora.password}</pass.fedora.password>
+                            <pass.fedora.baseurl>${pass.fedora.baseurl}</pass.fedora.baseurl>
+                            <pass.elasticsearch.url>${pass.elasticsearch.url}</pass.elasticsearch.url>
+                            <pass.elasticsearch.limit>${pass.elasticsearch.limit}</pass.elasticsearch.limit>
+                            <fcrepo.host>${fcrepo.server}</fcrepo.host>
+                            <es.host>${es.server}</es.host>
+                            <es.port>${es.http.port}</es.port>
+                            <pass.notification.smtp.host>${mail.server}</pass.notification.smtp.host>
+                            <pass.notification.smtp.port>${mail.msp.port}</pass.notification.smtp.port>
+                            <http.agent>${http.agent}</http.agent>
+
+                            <!-- IMAP properties for ITs -->
+                            <mail.imap.host>${mail.imap.host}</mail.imap.host>
+                            <mail.imap.port>${mail.imap.port}</mail.imap.port>
+                            <mail.imap.ssl.enable>${mail.imap.ssl.enable}</mail.imap.ssl.enable>
+                            <mail.imap.ssl.trust>${mail.imap.ssl.trust}</mail.imap.ssl.trust>
+                            <mail.imap.starttls.enable>${mail.imap.starttls.enable}</mail.imap.starttls.enable>
+                            <mail.imap.finalizecleanclose>${mail.imap.finalizecleanclose}</mail.imap.finalizecleanclose>
+                            <mail.imap.connectiontimeout>${mail.imap.connectiontimeout}</mail.imap.connectiontimeout>
+                            <mail.imap.timeout>${mail.imap.timeout}</mail.imap.timeout>
+
+                            <!-- Default username / password when connecting to IMAP -->
+                            <!-- Override by setting the desired credentials on the SimpleImapClientFactory -->
+                            <mail.imap.user>${mail.imap.user}</mail.imap.user>
+                            <mail.imap.password>${mail.imap.password}</mail.imap.password>
+                        </systemProperties>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>${codehaus.build-helper.plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>reserve-network-port</id>
+                            <goals>
+                                <goal>reserve-network-port</goal>
+                            </goals>
+                            <phase>process-resources</phase>
+                            <configuration>
+                                <portNames>
+                                    <portName>mail.smtp.port</portName>
+                                    <portName>mail.imap.port</portName>
+                                    <portName>mail.imaps.port</portName>
+                                    <portName>mail.msp.port</portName>
+                                    <portName>fcrepo.http.port</portName>
+                                    <portName>fcrepo.jms.port</portName>
+                                    <portName>fcrepo.stomp.port</portName>
+                                    <portName>es.http.port</portName>
+                                    <!--<portName>activemq.jms.port</portName>-->
+                                </portNames>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>
@@ -176,6 +267,134 @@
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
                     <version>${fabric8.docker.maven.plugin.version}</version>
+                    <configuration>
+
+                        <images>
+
+                            <image>
+                                <alias>mail</alias>
+                                <name>${docker.tvial.docker-mailserver.version}</name>
+                                <run>
+                                    <wait>
+                                        <time>${mail.waitms}</time>
+                                    </wait>
+                                    <skip>${mail.skip}</skip>
+                                    <hostname>mail</hostname>
+                                    <domainname>local.domain</domainname>
+                                    <ports>
+                                        <port>${mail.imaps.port}:993</port>
+                                        <port>${mail.msp.port}:587</port>
+                                    </ports>
+                                    <volumes>
+                                        <bind>
+                                            <volume>maildata:/var/mail</volume>
+                                            <volume>mailstate:/var/mail-state</volume>
+                                        </bind>
+                                    </volumes>
+                                    <links>
+                                        <link>ldap</link>
+                                    </links>
+                                    <env>
+                                        <HOSTNAME>mail</HOSTNAME>
+                                        <DOMAINNAME>jhu.edu</DOMAINNAME>
+                                        <DMS_DEBUG>0</DMS_DEBUG>
+                                        <ONE_DIR>1</ONE_DIR>
+                                        <SMTP_ONLY>0</SMTP_ONLY>
+                                        <PERMIT_DOCKER>network</PERMIT_DOCKER>
+                                        <OVERRIDE_HOSTNAME>mail.jhu.edu</OVERRIDE_HOSTNAME>
+                                        <TLS_LEVEL>intermediate</TLS_LEVEL>
+                                        <ENABLE_SPAMASSASSIN>0</ENABLE_SPAMASSASSIN>
+                                        <ENABLE_CLAMAV>0</ENABLE_CLAMAV>
+                                        <ENABLE_FAIL2BAN>0</ENABLE_FAIL2BAN>
+                                        <ENABLE_POSTGREY>0</ENABLE_POSTGREY>
+                                        <ENABLE_SASLAUTHD>0</ENABLE_SASLAUTHD>
+                                        <POSTMASTER_ADDRESS>root</POSTMASTER_ADDRESS>
+                                        <ENABLE_LDAP>1</ENABLE_LDAP>
+                                        <LDAP_SERVER_HOST>ldap</LDAP_SERVER_HOST>
+                                        <LDAP_SEARCH_BASE>ou=People,dc=pass</LDAP_SEARCH_BASE>
+                                        <LDAP_BIND_DN>cn=admin,dc=pass</LDAP_BIND_DN>
+                                        <LDAP_BIND_PW>password</LDAP_BIND_PW>
+                                        <LDAP_QUERY_FILTER_USER>(&amp;(objectClass=posixAccount)(mail=%s))</LDAP_QUERY_FILTER_USER>
+                                        <LDAP_QUERY_FILTER_GROUP>(&amp;(objectClass=posixAccount)(mailGroupMember=%s))</LDAP_QUERY_FILTER_GROUP>
+                                        <LDAP_QUERY_FILTER_ALIAS>(&amp;(objectClass=posixAccount)(mailAlias=%s))</LDAP_QUERY_FILTER_ALIAS>
+                                        <LDAP_QUERY_FILTER_DOMAIN>(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))</LDAP_QUERY_FILTER_DOMAIN>
+                                    </env>
+                                </run>
+                            </image>
+
+                            <image>
+                                <alias>fcrepo</alias>
+                                <name>${docker.fcrepo.version}</name>
+                                <run>
+                                    <skip>${fcrepo.skip}</skip>
+                                    <wait>
+                                        <!-- Should use ${pass.fedora.baseurl}, but need to add authentication params to the URL -->
+                                        <url>
+                                            http://${pass.fedora.user}:${pass.fedora.password}@${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/
+                                        </url>
+                                        <time>180000</time>
+                                    </wait>
+                                    <ports>
+                                        <port>${fcrepo.http.port}:${fcrepo.http.port}</port>
+                                        <port>${fcrepo.jms.port}:${fcrepo.jms.port}</port>
+                                        <port>${fcrepo.stomp.port}:${fcrepo.stomp.port}</port>
+                                    </ports>
+                                    <env>
+                                        <FCREPO_HOST>fcrepo</FCREPO_HOST>
+                                        <FCREPO_PORT>${fcrepo.http.port}</FCREPO_PORT>
+                                        <FCREPO_JMS_PORT>${fcrepo.jms.port}</FCREPO_JMS_PORT>
+                                        <FCREPO_STOMP_PORT>${fcrepo.stomp.port}</FCREPO_STOMP_PORT>
+                                        <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
+                                        <FCREPO_LOG_LEVEL>DEBUG</FCREPO_LOG_LEVEL>
+                                        <FCREPO_JMS_BASEURL>http://${fcrepo.server}:${fcrepo.http.port}/fcrepo/rest/</FCREPO_JMS_BASEURL>
+                                    </env>
+                                </run>
+                            </image>
+
+                            <image>
+                                <alias>ldap</alias>
+                                <name>${docker.ldap.version}</name>
+                                <run>
+                                    <skip>${ldap.skip}</skip>
+                                    <wait>
+                                        <time>${ldap.waitms}</time>
+                                    </wait>
+                                </run>
+                            </image>
+
+                            <!--<image>-->
+                                <!--<alias>activemq</alias>-->
+                                <!--<name>${docker.activemq.version}</name>-->
+                                <!--<run>-->
+                                    <!--<skip>${activemq.skip}</skip>-->
+                                    <!--<wait>-->
+                                        <!--<time>${activemq.waitms}</time>-->
+                                    <!--</wait>-->
+                                    <!--<ports>-->
+                                        <!--<port>${activemq.jms.port}:${activemq.jms.port}</port>-->
+                                    <!--</ports>-->
+                                <!--</run>-->
+                            <!--</image>-->
+
+                        </images>
+
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>start-docker-its</id>
+                            <phase>pre-integration-test</phase>
+                            <goals>
+                                <goal>start</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>stop-docker-its</id>
+                            <phase>post-integration-test</phase>
+                            <goals>
+                                <goal>stop</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>

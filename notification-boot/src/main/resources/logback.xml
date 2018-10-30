@@ -34,18 +34,18 @@
     <logger name="com.github.jknack.handlebars" additivity="false" level="${com.github.jknack.handlebars.level:-WARN}">
         <appender-ref ref="STDERR"/>
     </logger>
-    <logger name="org.dataconservancy.pass" additivity="false" level="${org.dataconservancy.pass.level:-WARN}">
+    <logger name="org.dataconservancy.pass" additivity="false" level="${org.dataconservancy.pass.level:-TRACE}">
         <appender-ref ref="STDERR"/>
     </logger>
     <logger name="org.dataconservancy.pass.notification" additivity="false"
-            level="${org.dataconservancy.pass.notification.level:-INFO}">
+            level="${org.dataconservancy.pass.notification.level:-TRACE}">
         <appender-ref ref="STDERR"/>
     </logger>
     <logger name="NOTIFICATION_LOG" additivity="false" level="${org.dataconservancy.pass.notification.level:-INFO}">
         <appender-ref ref="STDERR"/>
     </logger>
 
-    <logger name="com.sun.mail.imap" additivity="false" level="${com.sun.mail.imap.level:-WARN}">
+    <logger name="com.sun.mail.imap" additivity="false" level="${com.sun.mail.imap.level:-TRACE}">
         <appender-ref ref="STDERR"/>
     </logger>
     <!-- the rest client is noisy, and detracts from looking at test logging output -->

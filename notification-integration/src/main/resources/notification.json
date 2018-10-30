@@ -1,0 +1,89 @@
+{
+  "mode": "${pass.notification.mode}",
+  "recipient-config": [
+    {
+      "mode": "DEMO",
+      "fromAddress": "${pass.notification.demo.from.address}",
+      "global_cc": [
+        "${pass.notification.demo.global.cc.address}"
+      ],
+      "whitelist": [
+        "mailto:staffWithGrants@jhu.edu",
+        "mailto:staffWithNoGrants@jhu.edu"
+      ]
+    },
+    {
+      "mode": "PRODUCTION",
+      "fromAddress": "${pass.notification.production.from.address}"
+    }
+  ],
+  "templates": [
+    {
+      "notification": "SUBMISSION_APPROVAL_INVITE",
+      "templates": {
+        "SUBJECT": "${pass.notification.template.approval.invite.subject:classpath:/templates/approval-invite-subject.hbr}",
+        "BODY": "${pass.notification.template.approval.invite.body:classpath:/templates/approval-invite-body.hbr}",
+        "FOOTER": "${pass.notification.template.approval.invite.footer:classpath:/templates/footer.hbr}"
+      }
+    },
+    {
+      "notification": "SUBMISSION_APPROVAL_REQUESTED",
+      "templates": {
+        "SUBJECT": "${pass.notification.template.approval.requested.subject:classpath:/templates/approval-requested-subject.hbr}",
+        "BODY": "${pass.notification.template.approval.requested.body:classpath:/templates/approval-requested-body.hbr}",
+        "FOOTER": "${pass.notification.template.approval.requested.footer:classpath:/templates/footer.hbr}"
+      }
+    },
+    {
+      "notification": "SUBMISSION_CHANGES_REQUESTED",
+      "templates": {
+        "SUBJECT": "${pass.notification.template.changes.requested.subject:classpath:/templates/changes-requested-subject.hbr}",
+        "BODY": "${pass.notification.template.changes.requested.body:classpath:/templates/changes-requested-body.hbr}",
+        "FOOTER": "${pass.notification.template.changes.requested.footer:classpath:/templates/footer.hbr}"
+      }
+    },
+    {
+      "notification": "SUBMISSION_SUBMISSION_SUBMITTED",
+      "templates": {
+        "SUBJECT": "${pass.notification.template.submission.submitted.subject:classpath:/templates/submission-submitted-subject.hbr}",
+        "BODY": "${pass.notification.template.submission.submitted.body:classpath:/templates/submission-submitted-body.hbr}",
+        "FOOTER": "${pass.notification.template.submission.submitted.footer:classpath:/templates/footer.hbr}"
+      }
+    },
+    {
+      "notification": "SUBMISSION_SUBMISSION_CANCELLED",
+      "templates": {
+        "SUBJECT": "${pass.notification.template.submission.cancelled.subject:classpath:/templates/submission-cancelled-subject.hbr}",
+        "BODY": "${pass.notification.template.submission.cancelled.body:classpath:/templates/submission-cancelled-body.hbr}",
+        "FOOTER": "${pass.notification.template.submission.cancelled.footer:classpath:/templates/footer.hbr}"
+      }
+    }
+  ],
+  "smtp": {
+    "host": "${pass.notification.smtp.host}",
+    "port": "${pass.notification.smtp.port}",
+    "smtpUser": "${pass.notification.smtp.user}",
+    "smtpPassword": "${pass.notification.smtp.pass}"
+  },
+  "user-token-generator": {
+    "key": "${pass.link.usertoken.generator.key}"
+  },
+  "link-validators": [
+    {
+      "rels": [
+        "submission-view",
+        "submission-review",
+        "submission-review-invite"
+      ],
+      "requiredBaseURI": "${pass.link.scheme}://${pass.link.host}",
+      "throwExceptionWhenInvalid": true
+    },
+    {
+      "rels": [
+        "*"
+      ],
+      "requiredBaseURI": "${pass.link.scheme}",
+      "throwExceptionWhenInvalid": false
+    }
+  ]
+}
