@@ -20,13 +20,13 @@ package org.dataconservancy.pass.notification.impl;
 
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
-import org.dataconservancy.pass.notification.model.Notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -55,8 +55,13 @@ public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent
             case APPROVAL_REQUESTED_NEWUSER:
             case APPROVAL_REQUESTED:
             {
-                // to: submission.getSubmitter() // the AS
-                return whitelist.apply(singleton(submission.getSubmitter().toString()));
+                // to: authorized submitter
+                String submitterUriOrEmail = submitterUri(submission)
+                        .orElseGet(() -> submitterEmail(submission)
+                                .orElseThrow(() ->
+                                        new RuntimeException(
+                                                "Submitter URI and email are null for " + submission.getId())));
+                return whitelist.apply(singleton(submitterUriOrEmail));
             }
 
             case CHANGES_REQUESTED:
@@ -84,6 +89,14 @@ public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent
                 throw new RuntimeException("Unhandled SubmissionEvent type '" + event.getEventType() + "'");
             }
         }
+    }
+
+    private static Optional<String> submitterUri(Submission s) {
+        return Optional.ofNullable(s.getSubmitter()).map(URI::toString);
+    }
+
+    private static Optional<String> submitterEmail(Submission s) {
+        return Optional.ofNullable(s.getSubmitterEmail()).map(URI::toString);
     }
 
 }

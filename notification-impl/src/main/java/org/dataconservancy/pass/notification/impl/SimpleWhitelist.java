@@ -46,6 +46,11 @@ public class SimpleWhitelist implements Function<Collection<String>, Collection<
 
     @Override
     public Collection<String> apply(Collection<String> candidates) {
+        // if the supplied candidate is null, then no recipient will be allowed
+        if (candidates == null) {
+            return Collections.emptyList();
+        }
+
         // an empty or null whitelist is carries the semantics "any recipient is whitelisted"
         if (recipientConfig.getWhitelist() == null || recipientConfig.getWhitelist().isEmpty()) {
             return candidates;

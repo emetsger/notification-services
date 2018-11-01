@@ -52,10 +52,11 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.join;
 import static java.nio.charset.Charset.forName;
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.io.IOUtils.resourceToString;
-import static org.dataconservancy.pass.notification.impl.Links.deserialize;
 import static org.dataconservancy.pass.notification.impl.Composer.getRecipientConfig;
+import static org.dataconservancy.pass.notification.impl.Links.deserialize;
 import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW_INVITE;
 import static org.dataconservancy.pass.notification.model.Notification.Param.CC;
 import static org.dataconservancy.pass.notification.model.Notification.Param.EVENT_METADATA;
@@ -69,7 +70,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -121,6 +125,79 @@ public class ComposerIT {
         when(submission.getId()).thenReturn(URI.create(submissionId));
         when(submission.getPreparers()).thenReturn(preparers.stream().map(URI::create).collect(Collectors.toList()));
         when(submission.getSubmitter()).thenReturn(URI.create(submitter));
+    }
+
+    /**
+     * When the Submission's Submitter URI is null, the Submission's Submitter Email URI should be used instead.
+     */
+    @Test
+    @DirtiesContext
+    public void testNullSubmissionSubmitterUri() {
+        submission = mock(Submission.class);
+
+        // Use an empty whitelist so all recipients are accepted
+        RecipientConfig config = composer.getRecipientConfig();
+        config.setWhitelist(Collections.emptyList());
+
+        when(submission.getId()).thenReturn(URI.create(submissionId));
+        when(submission.getSubmitter()).thenReturn(null);
+        when(submission.getSubmitterEmail()).thenReturn(URI.create(submitter));
+        when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.APPROVAL_REQUESTED);
+
+        assertEquals(singleton(submitter),
+                composer.apply(submission, submissionEvent).getRecipients());
+
+        verify(submission).getSubmitter();
+        verify(submission).getSubmitterEmail();
+    }
+
+    /**
+     * When the Submission's Submitter URI is not null, it should take precedence over the use of the Submission's Submitter Email URI.
+     */
+    @Test
+    @DirtiesContext
+    public void testNonNullSubmissionSubmitterUri() {
+        // Use an empty whitelist so all recipients are accepted
+        RecipientConfig config = composer.getRecipientConfig();
+        config.setWhitelist(Collections.emptyList());
+
+        assertNotNull(submission.getSubmitter());
+        assertNull(submission.getSubmitterEmail());
+        when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.APPROVAL_REQUESTED);
+
+        assertEquals(singleton(submitter),
+                composer.apply(submission, submissionEvent).getRecipients());
+
+        // once above, and once in the tested code
+        verify(submission, times(2)).getSubmitter();
+        // one time - above, but never in the tested code since the submitter uri has precedence (and was non-null)
+        verify(submission, times(1)).getSubmitterEmail();
+    }
+
+    /**
+     * When the Submission's Submitter URI and the Submitter Email URI are
+     * null, a runtime exception should be thrown.
+     */
+    @Test
+    @DirtiesContext
+    public void testNullSubmissionSubmitterUriAndNullEmailUri() {
+        // Use an empty whitelist so all recipients are accepted
+        RecipientConfig config = composer.getRecipientConfig();
+        config.setWhitelist(Collections.emptyList());
+        when(submission.getId()).thenReturn(URI.create(submissionId));
+        when(submission.getSubmitter()).thenReturn(null);
+        when(submission.getSubmitterEmail()).thenReturn(null);
+        when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.APPROVAL_REQUESTED);
+
+        try {
+            composer.apply(submission, submissionEvent).getRecipients();
+            fail("Expected a runtime exception to be thrown.");
+        } catch (Exception expected) {
+            assertTrue(expected instanceof RuntimeException);
+        }
+
+        verify(submission).getSubmitter();
+        verify(submission).getSubmitterEmail();
     }
 
     /**
@@ -277,7 +354,7 @@ public class ComposerIT {
         Arrays.stream(Mode.values()).forEach(m -> {
             RecipientConfig rc = new RecipientConfig();
             rc.setMode(m);
-            rc.setGlobalCc(Collections.singleton(UUID.randomUUID().toString()));
+            rc.setGlobalCc(singleton(UUID.randomUUID().toString()));
             rcs.put(m, rc);
         });
 

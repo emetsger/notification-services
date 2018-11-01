@@ -31,12 +31,16 @@ import java.util.Collections;
 import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,6 +65,7 @@ public class RecipientAnalyzerTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        // Mock a whitelist that will accept any recipient provided to it
         whitelist = mock(Function.class);
         when(whitelist.apply(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -78,12 +83,12 @@ public class RecipientAnalyzerTest {
 
     @Test
     public void analyzeApprovalRequested() {
-        perform(Collections.singleton(submitter), SubmissionEvent.EventType.APPROVAL_REQUESTED);
+        perform(singleton(submitter), SubmissionEvent.EventType.APPROVAL_REQUESTED);
     }
 
     @Test
     public void analyzeApprovalRequestedNewUser() {
-        perform(Collections.singleton(submitter), SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+        perform(singleton(submitter), SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
     }
 
     @Test
@@ -101,12 +106,83 @@ public class RecipientAnalyzerTest {
     public void analyzeCancelledByPreparer() {
         when(event.getPerformedBy()).thenReturn(URI.create(preparer1));
         // FIXME other preparers should get a notification to
-        perform(Collections.singleton(submitter), SubmissionEvent.EventType.CANCELLED);
+        perform(singleton(submitter), SubmissionEvent.EventType.CANCELLED);
     }
 
     @Test
     public void analyzeSubmitted() {
         perform(preparers, SubmissionEvent.EventType.SUBMITTED);
+    }
+
+    /**
+     * Insure a null submitter and null submitter email is reported as a thrown runtime exception
+     * (model version 3.2 allows the submitter to be null)
+     */
+    @Test
+    public void testNullSubmitterAndNullEmail() {
+        submission = mock(Submission.class);
+        when(submission.getId()).thenReturn(URI.create("http://example.org/submission/1"));
+        when(submission.getSubmitter()).thenReturn(null);
+        when(submission.getSubmitterEmail()).thenReturn(null);
+
+        try {
+            perform(Collections.emptyList(), SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+            fail("Expected a RuntimeException to be thrown.");
+        } catch (Exception expected) {
+            assertTrue(expected instanceof RuntimeException);
+        }
+
+        verify(submission).getSubmitter();
+        verify(submission).getSubmitterEmail();
+    }
+
+    /**
+     * Insure a null submitter results in the submitter email address being used
+     * (model version 3.2 allows the submitter to be null)
+     */
+    @Test
+    public void testNullSubmitter() {
+        submission = mock(Submission.class);
+        when(submission.getId()).thenReturn(URI.create("http://example.org/submission/1"));
+        when(submission.getSubmitter()).thenReturn(null);
+        URI expectedRecipient = URI.create("mailto:ex@ample.org");
+        when(submission.getSubmitterEmail()).thenReturn(expectedRecipient);
+
+        perform(singleton(expectedRecipient.toString()), SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+
+        verify(submission).getSubmitter();
+        verify(submission).getSubmitterEmail();
+    }
+
+    /**
+     * insure a null submitter email results in the submitter user uri being used
+     */
+    @Test
+    public void testNullSubmitterEmail() {
+        when(submission.getId()).thenReturn(URI.create("http://example.org/submission/1"));
+        URI expectedRecipient = URI.create("http://example.org/users/1");
+        when(submission.getSubmitter()).thenReturn(expectedRecipient);
+
+        perform(singleton(expectedRecipient.toString()), SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+
+        verify(submission).getSubmitter();
+        verify(submission, times(0)).getSubmitterEmail();
+    }
+
+    /**
+     * insure the User URI has precedence over the submission submitter email
+     */
+    @Test
+    public void testNonNullSubmitterUserUriAndNonNullSubmitterEmail() {
+        when(submission.getId()).thenReturn(URI.create("http://example.org/submission/1"));
+        URI expectedRecipient = URI.create("http://example.org/users/1");
+        when(submission.getSubmitter()).thenReturn(expectedRecipient);
+        when(submission.getSubmitterEmail()).thenReturn(URI.create("mailto:ex@ample.org"));
+
+        perform(singleton(expectedRecipient.toString()), SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
+
+        verify(submission).getSubmitter();
+        verify(submission, times(0)).getSubmitterEmail();
     }
 
     private void perform(Collection<String> expectedRecipients, SubmissionEvent.EventType type) {

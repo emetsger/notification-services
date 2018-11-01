@@ -139,4 +139,14 @@ public class SimpleWhitelistTest {
         assertTrue(result.contains(candidate1));
         assertTrue(result.contains(candidate2));
     }
+
+    @Test
+    public void testNullCandidate() {
+        assertTrue(underTest.apply(null).isEmpty());
+    }
+
+    @Test
+    public void testEmptyCandidate() {
+        assertTrue(underTest.apply(Collections.emptyList()).isEmpty());
+    }
 }
