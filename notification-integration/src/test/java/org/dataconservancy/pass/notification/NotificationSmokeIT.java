@@ -60,6 +60,9 @@ public class NotificationSmokeIT {
 
     @Test
     public void postNewEvent() throws IOException, InterruptedException {
+        // This User prepares the submission on behalf of the Submission.submitter
+        // Confusingly, this User has the ability to submit to PASS.  The authorization-related role of
+        // User.Role.SUBMITTER should not be confused with the the logical role as a preparer of a submission.
         User preparer = new User();
         preparer.setEmail("emetsger@gmail.com");
         preparer.setDisplayName("Submission Preparer");
@@ -69,14 +72,21 @@ public class NotificationSmokeIT {
 
         preparer = passClient.createAndReadResource(preparer, User.class);
 
+        // The Submission as prepared by the preparer.
+        // The preparer did not find the authorized submitter in PASS, so they filled in the email address of the authorized submitter
+        // Therefore, the Submission.submitter field will be null (because that *must* be a URI to a User resource, and the User does not exist)
+        // The Submission.submitterEmail will be set to the email address of the authorized submitter
         Submission submission = new Submission();
         submission.setMetadata(resourceToString("/" + PathUtil.packageAsPath(ComposerIT.class) + "/submission-metadata.json", forName("UTF-8")));
         submission.setPreparers(Collections.singletonList(preparer.getId()));
         submission.setSource(Submission.Source.PASS);
-        submission.setSubmitter(URI.create("mailto:" + SENDER));
+        submission.setSubmitter(null);
+        submission.setSubmitterEmail(URI.create("mailto:" + SENDER));
 
         submission = passClient.createAndReadResource(submission, Submission.class);
 
+        // When this event is processed, the authorized submitter will recieve an email notification with a link that
+        // will invite them to use PASS, and link the Submission to their newly created User (created when they login to PASS for the first time)
         SubmissionEvent event = new SubmissionEvent();
         event.setSubmission(submission.getId());
         event.setPerformerRole(SubmissionEvent.PerformerRole.PREPARER);
