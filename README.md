@@ -214,12 +214,119 @@ An example configuration file is provided below:
 
 Design document is [here](https://docs.google.com/document/d/1k4dWIe-2pOb-E8qf-C0BE7tGDBsEZxGlHAfZ_KaDIGY/edit?usp=sharing).
 
+The major components of Notification Services (NS) are the model, business logic used to compose a `Notification`, and the dispatch of `Notification`s. 
+
+Currently each `SubmissionEvent` received by NS results in the creation of a single `Notification`, which results in the dispatch of a single email.  Multiple recipients (e.g. using CC or BCC email headers) can be specified on the email if needed.
+
 ## Model
 
-### Notification type
+The notification model is below.  While email is the natural form of dispatching notifications, the model tries to remain independent of an underlying transport or dispatch mechanism.
+
+![Notification Services Model](src/main/resources/ns-model.png)
+
+Highlights of this model are:
+- the `parameters` map: this is the model that is injected into the templating engine
+- the `resouceUri` references the PASS resource this notification pertains to
+- the `eventUri` references the PASS resource that this notification is responding to
+- the `type` is the type of the `Notification`.  In this case, there is a 1:1 correspondence between the `SubmissionEvent` type and the `Notification` type.
 
 ### Parameters
 
-## Templates
+The `parameters` map carries simple strings or serialized JSON structures.
+- `TO`, `CC`, `BCC` (not used), `FROM`, and `SUBJECT` are all simple strings
+- `RESOURCE_METADATA`, `EVENT_METADATA`, and `LINKS` all contain serialized JSON structures
+- Handlebars, the Mustache-based template engine, can navigate the JSON structures to pull out the desired information for email templates.
+
+## Notification Service
+
+The `NotificationService` is the primary interface that abstracts the business logic associated with composing a `Notification` and handing it off for dispatch.  If future requirements dictate multiple `Notification`s were to arise from a single `SubmissionEvent`, `DefaultNotificationService` would be the starting point for implementing the fan out.
+
+The `Composer` class does the heavy lifting within the `DefaultNotificationService`.  It is responsible for composing a `Notification` from the `Submission` and `SubmissionEvent`, including:
+- determining the type of `Notification`
+- creating and populating the data structures used in the `parameters` map
+- determining the recipients of the `Notification`, and from whom the `Notification` should come from
+
+After a `Notification` has been created and populated, it is sent to the `DispatchApi`, which returns a unique identifier for each `Notification` it dispatches.
 
 ## Dispatch
+
+The Dispatch API accepts a `Notification` and returns a unique identifier for each `Notification` it dispatches.  The unique identifier is determined by the underlying notification implementation.  For example, `EmailDispatchImpl` returns the SMTP `Message-ID`.  The identifier can be used to associate a `Notification` with the underlying notification transport.
+
+The Dispatch portion of Notification Services is not concerned with populating the `Notification`; it expects that business logic to have been performed earlier in the call stack.
+
+Dispatch _does_ have to adapt a `Notification` to the underlying transport used - in this case, email.  This means resolving URIs to recipient email addresses, and invoking the templating engine for composing email subject, body, and footer.
+
+### Email Implementation
+
+The only `DispatchService` implementation is the `EmailDispatchImpl`, which is composed of three main classes:
+- `Parameterizer`: responsible for resolving template content and invoking the templating engine, producing the content for the email subject, body, and footer
+- `EmailComposer`: responsible for adapting the `Notification` to an email (including resolving and setting the from, to, and cc addresses), provided the parameterized templates
+- `Mailer`: responsible for actually sending the email to recipients
+
+### Templates
+
+Templates are used to customize the subject, body, and footer of email messages that result from a notification.  Each notification type has a corresponding template, and the templates and their content are configured in the `notification.js` configuration file.  A sample portion of the configuration is below:
+
+```json
+"templates": [
+    {
+      "notification": "SUBMISSION_APPROVAL_INVITE",
+      "templates": {
+        "SUBJECT": "Approval Invite Subject",
+        "BODY": "Approval Invite Body",
+        "FOOTER": "Approval Invite Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_APPROVAL_REQUESTED",
+      "templates": {
+        "SUBJECT": "Approval Requested Subject",
+        "BODY": "Approval Requested Body",
+        "FOOTER": "Approval Requested Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_CHANGES_REQUESTED",
+      "templates": {
+        "SUBJECT": "Changes Requested Subject",
+        "BODY": "Changes Requested Body",
+        "FOOTER": "Changes Requested Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_SUBMISSION_SUBMITTED",
+      "templates": {
+        "SUBJECT": "Submission Submitted Subject",
+        "BODY": "Submission Submitted Body",
+        "FOOTER": "Submission Submitted Footer"
+      }
+    },
+    {
+      "notification": "SUBMISSION_SUBMISSION_CANCELLED",
+      "templates": {
+        "SUBJECT": "Submission Cancelled Subject",
+        "BODY": "Submission Cancelled Body",
+        "FOOTER": "Submission Cancelled Footer"
+      }
+    }
+  ]
+```
+
+You can see that there is an object identifying each notification type, and for each notification type a `SUBJECT`, `BODY`, and `FOOTER` template may be defined.
+
+The value associated with `SUBJECT`, `BODY`, and `FOOTER` may be in-line content as seen in the example, or it can be a reference to a Spring Resource URI, e.g.:
+```json
+    {
+      "notification": "SUBMISSION_APPROVAL_INVITE",
+      "templates": {
+        "SUBJECT": "classpath:/templates/submission-approval-subject.txt",
+        "BODY": "classpath:/templates/submission-approval-body.txt",
+        "FOOTER": "classpath:/templates/submission-approval-footer.txt"
+      }
+    }
+```
+Using Spring Resource URIs to refer to the template location is a more flexible and maintainable way of managing notification templates, because it allows the templates to be updated in place without having to edit the primary configuration file (`notification.js`) any time a template needs updating.  Using Spring Resource URIs also allows template content to be shared across notification types.  For example, each notification type could use the same `FOOTER` content.  The `CompositeResolver` is responsible for determining whether or not the value represents inline content, or if it represents a Spring Resource URI to be resolved.
+
+Notification Services supports Mustache templates, specifically implemented using Handlebars.  Each template is injected with the `parameters` map from the `Notification`.  See above for the documented fields of the `parameters` map.  It is beyond the scope of this README to provide guidance on using Mustache or Handlebars, but there are some examples in `pass-docker`, and in the `HandlebarsParameterizerTest`.  Both inline template content and referenced template content (i.e. Spring Resource URIs) can be Mustache templates.
+
+### Composition
