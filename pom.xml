@@ -191,6 +191,7 @@
                             <es.port>${es.http.port}</es.port>
                             <pass.notification.smtp.host>${mail.server}</pass.notification.smtp.host>
                             <pass.notification.smtp.port>${mail.msp.port}</pass.notification.smtp.port>
+                            <pass.notification.smtp.transport>SMTP</pass.notification.smtp.transport>
                             <http.agent>${http.agent}</http.agent>
 
                             <!-- IMAP properties for ITs -->

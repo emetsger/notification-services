@@ -63,7 +63,8 @@
     "host": "${pass.notification.smtp.host}",
     "port": "${pass.notification.smtp.port}",
     "smtpUser": "${pass.notification.smtp.user}",
-    "smtpPassword": "${pass.notification.smtp.pass}"
+    "smtpPassword": "${pass.notification.smtp.pass}",
+    "smtpTransport": "${pass.notification.smtp.transport}"
   },
   "user-token-generator": {
     "key": "${pass.link.usertoken.generator.key}"

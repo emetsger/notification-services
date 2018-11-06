@@ -26,11 +26,11 @@ public class SmtpServerConfig {
 
     private String port;
 
-    private boolean secure = true;
-
     private String smtpUser;
 
     private String smtpPassword;
+
+    private String smtpTransport;
 
     public String getHost() {
         return host;
@@ -46,14 +46,6 @@ public class SmtpServerConfig {
 
     public void setPort(String port) {
         this.port = port;
-    }
-
-    public boolean isSecure() {
-        return secure;
-    }
-
-    public void setSecure(boolean secure) {
-        this.secure = secure;
     }
 
     public String getSmtpUser() {
@@ -72,6 +64,14 @@ public class SmtpServerConfig {
         this.smtpPassword = smtpPassword;
     }
 
+    public String getSmtpTransport() {
+        return smtpTransport;
+    }
+
+    public void setSmtpTransport(String smtpTransport) {
+        this.smtpTransport = smtpTransport;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -79,12 +79,15 @@ public class SmtpServerConfig {
         if (o == null || getClass() != o.getClass())
             return false;
         SmtpServerConfig that = (SmtpServerConfig) o;
-        return secure == that.secure && Objects.equals(host, that.host) && Objects.equals(port, that.port) && Objects.equals(smtpUser, that.smtpUser) && Objects.equals(smtpPassword, that.smtpPassword);
+        return Objects.equals(host, that.host) &&
+                Objects.equals(port, that.port) &&
+                Objects.equals(smtpUser, that.smtpUser) &&
+                Objects.equals(smtpPassword, that.smtpPassword) &&
+                Objects.equals(smtpTransport, that.smtpTransport);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(host, port, secure, smtpUser, smtpPassword);
+        return Objects.hash(host, port, smtpUser, smtpPassword, smtpTransport);
     }
-
 }

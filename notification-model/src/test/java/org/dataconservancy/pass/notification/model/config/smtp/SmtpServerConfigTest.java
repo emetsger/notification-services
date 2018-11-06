@@ -32,7 +32,8 @@ public class SmtpServerConfigTest extends AbstractJacksonMappingTest {
             "      \"host\": \"smtp.gmail.com\",\n" +
             "      \"port\": \"587\",\n" +
             "      \"smtpUser\": \"foo\",\n" +
-            "      \"smtpPassword\": \"bar\"\n" +
+            "      \"smtpPassword\": \"bar\",\n" +
+            "      \"smtpTransport\": \"SMTP\"\n" +
             "    }";
 
 
@@ -41,9 +42,9 @@ public class SmtpServerConfigTest extends AbstractJacksonMappingTest {
         SmtpServerConfig config = mapper.readValue(SMTP_CONFIG_JSON, SmtpServerConfig.class);
         assertEquals("smtp.gmail.com", config.getHost());
         assertEquals("587", config.getPort());
-        assertTrue(config.isSecure());
         assertEquals("foo", config.getSmtpUser());
         assertEquals("bar", config.getSmtpPassword());
+        assertEquals("SMTP", config.getSmtpTransport());
         assertRoundTrip(config, SmtpServerConfig.class);
     }
 

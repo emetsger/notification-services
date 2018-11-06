@@ -209,7 +209,7 @@ public class SpringBootNotificationConfig {
         Mailer mailer = MailerBuilder
                 .withSMTPServerHost(smtpConfig.getHost())
                 .withSMTPServerPort(Integer.parseInt(smtpConfig.getPort()))
-                .withTransportStrategy(TransportStrategy.SMTP) // TODO fixme
+                .withTransportStrategy(TransportStrategy.valueOf(smtpConfig.getSmtpTransport().toUpperCase()))
                 .withDebugLogging(mailerDebug)
                 .buildMailer();
 

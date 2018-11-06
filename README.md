@@ -26,8 +26,7 @@ Notification Services (NS) emits notifications in the form of email.  Therefore 
 - `PASS_NOTIFICATION_SMTP_PORT` (`pass.notification.smtp.port`): the TCP port for SMTP mail relay or submission
 - `PASS_NOTIFICATION_SMTP_USER` (`pass.notification.smtp.user`): optional username for SMTP auth
 - `PASS_NOTIFICATION_SMTP_PASS` (`pass.notification.smtp.pass`): optional password for SMTP auth
-
-**Currently only plain text SMTP communication is supported**.  A future release of NS will allow SMTPS and TLS to be chosen.
+- `PASS_NOTIFICATION_SMTP_TRANSPORT` (`pass.notification.smtp.transport`): valid options are: `SMTP`, `SMTPS`, `SMTP_TLS`
 
 ## Notification Recipients
 
@@ -114,8 +113,9 @@ Supported environment variables (system property analogs) and default values are
 - `PASS_NOTIFICATION_MODE` (`pass.notification.mode`): `DEMO`
 - `PASS_NOTIFICATION_SMTP_HOST` (`pass.notification.smtp.host`): `${pass.notification.smtp.host:localhost}`
 - `PASS_NOTIFICATION_SMTP_PORT` (`pass.notification.smtp.port`): `${pass.notification.smtp.port:587}`
-- `PASS_NOTIFICATION_SMTP_USER` (`pass.notification.smtp.user`): 
-- `PASS_NOTIFICATION_PASS` (`pass.notification.smtp.pass`): 
+- `PASS_NOTIFICATION_SMTP_USER` (`pass.notification.smtp.user`):
+- `PASS_NOTIFICATION_SMTP_PASS` (`pass.notification.smtp.pass`):
+- `PASS_NOTIFICATION_SMTP_TRANSPORT` (`pass.notification.smtp.transport`): `${pass.notification.smtp.transport:SMTP}`  
 - `PASS_NOTIFICATION_MAILER_DEBUG` (`pass.notification.mailer.debug`): `false`
 - `PASS_NOTIFICATION_CONFIGURATION` (`pass.notification.configuration`): `classpath:/notification.json`
 - `PASS_NOTIFICATION_HTTP_AGENT` (`pass.notification.http.agent`): `pass-notification/x.y.z`
@@ -185,7 +185,8 @@ An example configuration file is provided below:
     "host": "${pass.notification.smtp.host}",
     "port": "${pass.notification.smtp.port}",
     "smtpUser": "${pass.notification.smtp.user}",
-    "smtpPassword": "${pass.notification.smtp.pass}"
+    "smtpPassword": "${pass.notification.smtp.pass}",
+    "smtpTransport": "SMTP_TLS"
   },
   "user-token-generator": {
     "key": "BETKPFHWGGDIEWIIYKYQ33LUS4"
