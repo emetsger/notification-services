@@ -103,7 +103,7 @@
         <docker.fcrepo.version>oapass/fcrepo:4.7.5-3.2-1</docker.fcrepo.version>
         <docker.indexer.version>oapass/indexer:0.0.17-3.2-SNAPSHOT</docker.indexer.version>
         <docker.elasticsearch.version>docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3</docker.elasticsearch.version>
-        <docker.tvial.docker-mailserver.version>oapass/docker-mailserver:20181029</docker.tvial.docker-mailserver.version>
+        <docker.tvial.docker-mailserver.version>oapass/docker-mailserver:20181105</docker.tvial.docker-mailserver.version>
         <docker.ldap.version>oapass/ldap:20181029</docker.ldap.version>
 
         <pass.jsonld.context>https://oa-pass.github.io/pass-data-model/src/main/resources/context-3.1.jsonld</pass.jsonld.context>
