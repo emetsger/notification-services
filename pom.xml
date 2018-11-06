@@ -319,6 +319,9 @@
                                         <LDAP_QUERY_FILTER_GROUP>(&amp;(objectClass=posixAccount)(mailGroupMember=%s))</LDAP_QUERY_FILTER_GROUP>
                                         <LDAP_QUERY_FILTER_ALIAS>(&amp;(objectClass=posixAccount)(mailAlias=%s))</LDAP_QUERY_FILTER_ALIAS>
                                         <LDAP_QUERY_FILTER_DOMAIN>(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))</LDAP_QUERY_FILTER_DOMAIN>
+                                        <SSL_TYPE>manual</SSL_TYPE>
+                                        <SSL_CERT_PATH>/tmp/docker-mailserver/cert.pem</SSL_CERT_PATH>
+                                        <SSL_KEY_PATH>/tmp/docker-mailserver/key.rsa</SSL_KEY_PATH>
                                     </env>
                                 </run>
                             </image>
