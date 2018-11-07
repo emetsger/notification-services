@@ -19,8 +19,10 @@
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.helper.ConditionalHelpers;
+import org.apache.commons.io.IOUtils;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.Notification.Param;
 import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate.Name;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class HandlebarsParameterizerTest {
@@ -90,6 +93,7 @@ public class HandlebarsParameterizerTest {
         paramMap.put(Param.LINKS, LINK_METADATA);
         Handlebars handlebars = new Handlebars();
         handlebars.registerHelper("eq", ConditionalHelpers.eq);
+        handlebars = handlebars.with(EscapingStrategy.NOOP);
         underTest = new HandlebarsParameterizer(handlebars, mapper);
     }
 
@@ -102,5 +106,16 @@ public class HandlebarsParameterizerTest {
         assertTrue(parameterized.contains(COMMENT_STRING));
         assertTrue(parameterized.contains(SUBMISSION_REVIEW_LINK));
         assertTrue(parameterized.contains(ARTICLE_TITLE));
+    }
+
+    @Test
+    public void urlEncoding() throws IOException {
+        String href = "http://example.org?queryParam=value";
+        HashMap<Param, String> paramMap = new HashMap<Param, String>() {{
+            put(Param.TO, href);
+        }};
+        String parameterized = underTest.parameterize(Name.BODY, paramMap, IOUtils.toInputStream("{{to}}", "UTF-8"));
+
+        assertEquals(href, parameterized);
     }
 }

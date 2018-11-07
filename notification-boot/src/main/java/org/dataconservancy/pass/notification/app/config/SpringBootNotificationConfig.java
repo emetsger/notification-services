@@ -17,6 +17,7 @@ package org.dataconservancy.pass.notification.app.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.helper.ConditionalHelpers;
 import org.dataconservancy.pass.client.PassClient;
@@ -199,7 +200,7 @@ public class SpringBootNotificationConfig {
     public Handlebars handlebars() {
         Handlebars handlebars = new Handlebars();
         handlebars.registerHelper("eq", ConditionalHelpers.eq);
-        return handlebars;
+        return handlebars.with(EscapingStrategy.NOOP);
     }
 
     @Bean
