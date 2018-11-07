@@ -16,6 +16,8 @@
 package org.dataconservancy.pass.notification.impl;
 
 import org.dataconservancy.pass.notification.model.config.RecipientConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
  */
 public class SimpleWhitelist implements Function<Collection<String>, Collection<String>> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleWhitelist.class);
+
     private RecipientConfig recipientConfig;
 
     public SimpleWhitelist(RecipientConfig recipientConfig) {
@@ -48,16 +52,22 @@ public class SimpleWhitelist implements Function<Collection<String>, Collection<
     public Collection<String> apply(Collection<String> candidates) {
         // if the supplied candidate is null, then no recipient will be allowed
         if (candidates == null) {
+            LOG.debug("No recipient to whitelist: supplied candidate email address was null.");
             return Collections.emptyList();
         }
 
         // an empty or null whitelist is carries the semantics "any recipient is whitelisted"
         if (recipientConfig.getWhitelist() == null || recipientConfig.getWhitelist().isEmpty()) {
+            LOG.debug("Any recipient will be whitelisted: the whitelist is empty.");
             return candidates;
         }
 
         return candidates.stream()
-                .filter(candidate -> isWhitelisted(candidate.toLowerCase(), recipientConfig.getWhitelist()))
+                .filter(candidate -> {
+                    boolean isWhitelisted = isWhitelisted(candidate.toLowerCase(), recipientConfig.getWhitelist());
+                    LOG.debug("{} is whitelisted: {}", candidate, isWhitelisted);
+                    return isWhitelisted;
+                })
                 .collect(Collectors.toSet());
     }
 
