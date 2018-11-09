@@ -44,6 +44,8 @@ public class EmailComposer {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailComposer.class);
 
+    private static final Logger NOTIFICATION_LOG = LoggerFactory.getLogger("NOTIFICATION_LOG");
+
     private PassClient passClient;
 
     private Function<Collection<String>, Collection<String>> whitelist;
@@ -84,7 +86,8 @@ public class EmailComposer {
 
         Collection<String> whitelistedRecipients = whitelist.apply(resolvedRecipients);
 
-        LOG.info("Whitelisted recipients: [{}]", join(", ", whitelistedRecipients));
+        LOG.debug("Whitelisted recipients: [{}]", join(", ", whitelistedRecipients));
+        NOTIFICATION_LOG.info("Whitelisted recipients: [{}]", join(", ", whitelistedRecipients));
 
         String emailToAddress = join(",", whitelistedRecipients);
 
