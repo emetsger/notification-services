@@ -36,6 +36,7 @@ import org.dataconservancy.pass.notification.model.config.template.NotificationT
 import org.dataconservancy.pass.notification.util.async.Condition;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +59,6 @@ import java.util.stream.Collectors;
 import static java.nio.charset.Charset.forName;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
 import static org.apache.commons.io.IOUtils.resourceToString;
 import static org.dataconservancy.pass.notification.impl.Links.serialized;
 import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW_INVITE;
@@ -75,7 +75,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -116,6 +115,11 @@ public class EmailDispatchImplIT {
         imapClientFactory.setImapUser(RECIPIENT);
         imapClientFactory.setImapPass("moo");
         imapClient = imapClientFactory.getObject();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        imapClient.close();
     }
 
     /**
@@ -429,13 +433,14 @@ public class EmailDispatchImplIT {
         assertEquals(4, actualRecipients.size());
 
         imapClientFactory.setImapUser(secondRecipient);
-        SimpleImapClient facultyClient = imapClientFactory.getObject();
+        Message secondMessage;
+        try (SimpleImapClient facultyClient = imapClientFactory.getObject()) {
+            Condition.newMessageCondition(messageId, facultyClient).await();
+            secondMessage = Condition.getMessage(messageId, facultyClient).call();
+            assertNotNull(secondMessage);
+            actualRecipients = Arrays.stream(secondMessage.getAllRecipients()).map(Object::toString).collect(Collectors.toSet());
+        }
 
-        Condition.newMessageCondition(messageId, facultyClient).await();
-        message = Condition.getMessage(messageId, facultyClient).call();
-        assertNotNull(message);
-
-        actualRecipients = Arrays.stream(message.getAllRecipients()).map(Object::toString).collect(Collectors.toSet());
 
         assertTrue(actualRecipients.contains(RECIPIENT));
         assertTrue(actualRecipients.contains(secondRecipient));
