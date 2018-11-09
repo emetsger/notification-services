@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
-public class SimpleImapClient {
+public class SimpleImapClient implements AutoCloseable {
 
     final static String TEXT_PLAIN = "text/plain";
 
@@ -93,6 +93,17 @@ public class SimpleImapClient {
                 throw new RuntimeException(e);
             }
         }).findAny().orElseThrow(() -> new RuntimeException("Message '" + messageId + "' not found in any folder."));
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (store.isConnected()) {
+            LOG.trace("Store '{}@{}' is being closed",
+                    store.getClass().getName(),
+                    Integer.toHexString(System.identityHashCode(store)));
+
+            store.close();
+        }
     }
 
     public static String getBodyAsText(Message message) throws IOException, MessagingException {

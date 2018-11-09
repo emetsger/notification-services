@@ -35,8 +35,6 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleImapClientFactory.class);
 
-    private IMAPStore imapStore;
-
     private Session session;
 
     @Value("${mail.imap.host}")
@@ -49,8 +47,7 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
     private String imapPass;
 
     @Autowired
-    public SimpleImapClientFactory(IMAPStore imapStore, Session session) {
-        this.imapStore = imapStore;
+    public SimpleImapClientFactory(Session session) {
         this.session = session;
     }
 
@@ -72,6 +69,8 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
 
     @Override
     public SimpleImapClient getObject() throws Exception {
+        IMAPStore imapStore = imapStore(session);
+
         if (!imapStore.isConnected()) {
             try {
                 LOG.trace("Connecting to IMAP host '{}' store '{}@{}' with username '{}'",
@@ -94,5 +93,13 @@ public class SimpleImapClientFactory implements FactoryBean<SimpleImapClient> {
     @Override
     public Class<?> getObjectType() {
         return SimpleImapClient.class;
+    }
+
+    private IMAPStore imapStore(Session session) {
+        try {
+            return (IMAPStore) session.getStore("imap");
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
