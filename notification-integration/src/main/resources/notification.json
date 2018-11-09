@@ -8,8 +8,8 @@
         "${pass.notification.demo.global.cc.address}"
       ],
       "whitelist": [
-        "mailto:staffWithGrants@jhu.edu",
-        "mailto:staffWithNoGrants@jhu.edu"
+        "staffWithGrants@jhu.edu",
+        "staffWithNoGrants@jhu.edu"
       ]
     },
     {
