@@ -131,13 +131,8 @@ public class ComposerIT {
      * When the Submission's Submitter URI is null, the Submission's Submitter Email URI should be used instead.
      */
     @Test
-    @DirtiesContext
     public void testNullSubmissionSubmitterUri() {
         submission = mock(Submission.class);
-
-        // Use an empty whitelist so all recipients are accepted
-        RecipientConfig config = composer.getRecipientConfig();
-        config.setWhitelist(Collections.emptyList());
 
         when(submission.getId()).thenReturn(URI.create(submissionId));
         when(submission.getSubmitter()).thenReturn(null);
@@ -155,12 +150,7 @@ public class ComposerIT {
      * When the Submission's Submitter URI is not null, it should take precedence over the use of the Submission's Submitter Email URI.
      */
     @Test
-    @DirtiesContext
     public void testNonNullSubmissionSubmitterUri() {
-        // Use an empty whitelist so all recipients are accepted
-        RecipientConfig config = composer.getRecipientConfig();
-        config.setWhitelist(Collections.emptyList());
-
         assertNotNull(submission.getSubmitter());
         assertNull(submission.getSubmitterEmail());
         when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.APPROVAL_REQUESTED);
@@ -179,11 +169,7 @@ public class ComposerIT {
      * null, a runtime exception should be thrown.
      */
     @Test
-    @DirtiesContext
     public void testNullSubmissionSubmitterUriAndNullEmailUri() {
-        // Use an empty whitelist so all recipients are accepted
-        RecipientConfig config = composer.getRecipientConfig();
-        config.setWhitelist(Collections.emptyList());
         when(submission.getId()).thenReturn(URI.create(submissionId));
         when(submission.getSubmitter()).thenReturn(null);
         when(submission.getSubmitterEmail()).thenReturn(null);
@@ -201,112 +187,11 @@ public class ComposerIT {
     }
 
     /**
-     * When composing a Notification with an empty whitelist, every recipient should be present.
-     */
-    @Test
-    @DirtiesContext
-    public void testEmptyWhitelist() {
-        RecipientConfig config = composer.getRecipientConfig();
-        config.setWhitelist(Collections.emptyList());
-
-        when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.APPROVAL_REQUESTED);
-
-        Notification n = composer.apply(submission, submissionEvent);
-
-        assertEquals(1, n.getRecipients().size());
-        assertTrue(n.getRecipients().contains(submitter));
-    }
-
-    /**
-     * When composing a Notification, the global CC addresses should not be filtered by the whitelist, while the direct recipients are.
-     */
-    @Test
-    @DirtiesContext
-    public void testGlobalCCUnaffectedByWhitelist() {
-        RecipientConfig config = composer.getRecipientConfig();
-
-        // Configure the whitelist such that the submitter's address will
-        // *not* be whitelisted
-        String whitelistEmail = "foo@bar.baz";
-        config.setWhitelist(singletonList(whitelistEmail));
-
-        String globalCCEmail = "cc@example.org";
-        config.setGlobalCc(singletonList(globalCCEmail));
-
-        when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.APPROVAL_REQUESTED);
-
-        Notification n = composer.apply(submission, submissionEvent);
-
-        // The recipient list doesn't contain the submitter because they aren't whitelisted
-        assertEquals(0, n.getRecipients().size());
-
-        // The cc list does contain the expected address, because the global cc is not filtered through the whitelist at all
-        assertEquals(1, n.getCc().size());
-        assertTrue(n.getCc().contains(globalCCEmail));
-    }
-
-    /**
-     * When composing a Notification with a non-empty whitelist, only those whitelisted recipients should be present.
-     */
-    @Test
-    @DirtiesContext
-    public void testWhitelistFilter() {
-        Collection<String> allPreparers = preparers;
-        Collection<String> onePreparer = singletonList(preparer_1);
-
-        // Configure the whitelist to contain all the preparers
-        RecipientConfig config = composer.getRecipientConfig();
-        config.setWhitelist(allPreparers);
-
-        when(submissionEvent.getEventType()).thenReturn(SubmissionEvent.EventType.CHANGES_REQUESTED);
-
-        Notification n = composer.apply(submission, submissionEvent);
-
-        // all the preparers should be present
-        assertEquals(2, n.getRecipients().size());
-        assertTrue(n.getRecipients().contains(preparer_1));
-        assertTrue(n.getRecipients().contains(preparer_2));
-
-        // Configure the whitelist to contain only one of the preparers
-        config = composer.getRecipientConfig();
-        config.setWhitelist(onePreparer);
-
-        n = composer.apply(submission, submissionEvent);
-
-        // Only one of the preparers should be present
-        assertEquals(1, n.getRecipients().size());
-        assertTrue(n.getRecipients().contains(preparer_1));
-    }
-
-    /**
      * Insure the mode for the RecipientConfig matches the NotificationConfig mode
      */
     @Test
     public void testRecipientConfigForMode() {
         assertEquals(config.getMode(), composer.getRecipientConfig().getMode());
-    }
-
-    /**
-     * Insure that the proper whitelist is used for the specified mode
-     */
-    @Test
-    @DirtiesContext
-    public void testRecipientConfigForEachMode() {
-        // make a unique whitelist and recipient config for each possible mode
-        HashMap<Mode, RecipientConfig> rcs = new HashMap<>();
-        Arrays.stream(Mode.values()).forEach(m -> {
-            RecipientConfig rc = new RecipientConfig();
-            rc.setMode(m);
-            rc.setWhitelist(new ArrayList<>(1));
-            rcs.put(m, rc);
-        });
-
-        config.setRecipientConfigs(rcs.values());
-
-        Arrays.stream(Mode.values()).forEach(mode -> {
-            config.setMode(mode);
-            assertEquals(mode, new Composer(config, mapper).getRecipientConfig().getMode());
-        });
     }
 
     /**

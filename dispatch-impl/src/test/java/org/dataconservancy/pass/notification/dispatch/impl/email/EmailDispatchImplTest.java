@@ -33,8 +33,10 @@ import org.simplejavamail.mailer.Mailer;
 import javax.mail.Message.RecipientType;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -86,6 +88,7 @@ public class EmailDispatchImplTest {
 
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         notification = mock(Notification.class);
         config = mock(NotificationConfig.class);
@@ -109,7 +112,11 @@ public class EmailDispatchImplTest {
         when(passClient.readResource(URI.create(userUri), User.class)).thenReturn(user);
 
         Parameterizer parameterizer = new Parameterizer(config, templateResolver, templateParameterizer);
-        EmailComposer composer = new EmailComposer(passClient);
+
+        // mock a whitelist that accepts all recipients by simply returning the collection of recipients it was provided
+        Function<Collection<String>, Collection<String>> whitelist = mock(Function.class);
+        when(whitelist.apply(any())).thenAnswer(inv -> inv.getArgument(0));
+        EmailComposer composer = new EmailComposer(passClient, whitelist);
 
         underTest = new EmailDispatchImpl(parameterizer, mailer, composer);
     }

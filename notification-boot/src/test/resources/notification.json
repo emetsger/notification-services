@@ -5,10 +5,14 @@
       "mode": "DEMO",
       "fromAddress": "demo-pass@mail.local.domain",
       "global_cc": [
-        "demo@mail.local.domain"
+        "notification-demo-cc@jhu.edu"
       ],
       "whitelist": [
-        "mailto:emetsger@mail.local.domain"
+        "emetsger@mail.local.domain",
+        "staffWithNoGrants@jhu.edu",
+        "facultyWithGrants@jhu.edu",
+        "staffWithGrants@jhu.edu",
+        "moo-thru@bar.edu"
       ]
     }
   ],

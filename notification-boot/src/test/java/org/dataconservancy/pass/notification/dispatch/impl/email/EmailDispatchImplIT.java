@@ -29,7 +29,9 @@ import org.dataconservancy.pass.notification.impl.ComposerIT;
 import org.dataconservancy.pass.notification.model.Link;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.SimpleNotification;
+import org.dataconservancy.pass.notification.model.config.Mode;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
+import org.dataconservancy.pass.notification.model.config.RecipientConfig;
 import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
 import org.dataconservancy.pass.notification.util.async.Condition;
 import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
@@ -46,11 +48,17 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.mail.Message;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.Charset.forName;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static org.apache.commons.io.IOUtils.resourceToString;
 import static org.dataconservancy.pass.notification.impl.Links.serialized;
 import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW_INVITE;
@@ -63,9 +71,11 @@ import static org.dataconservancy.pass.notification.model.Notification.Type.SUBM
 import static org.dataconservancy.pass.notification.util.PathUtil.packageAsPath;
 import static org.dataconservancy.pass.notification.util.mail.SimpleImapClient.getBodyAsText;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -81,6 +91,8 @@ public class EmailDispatchImplIT {
     private static final String RECIPIENT = "staffWithNoGrants@jhu.edu";
 
     private static final String CC = "facultyWithGrants@jhu.edu";
+
+    private static final String GLOBAL_DEMO_CC_ADDRESS = "notification-demo-cc@jhu.edu";
 
     @Autowired
     private EmailDispatchImpl underTest;
@@ -116,8 +128,8 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setCc(Collections.singleton(CC));
-        n.setRecipient(Collections.singleton("mailto:" + RECIPIENT));
+        n.setCc(singleton(CC));
+        n.setRecipient(singleton("mailto:" + RECIPIENT));
 
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
@@ -145,7 +157,7 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setRecipient(Collections.singleton(recipientUri.toString()));
+        n.setRecipient(singleton(recipientUri.toString()));
 
         String messageId = underTest.dispatch(n);
 
@@ -178,12 +190,12 @@ public class EmailDispatchImplIT {
             }
         });
 
-        config.setTemplates(Collections.singleton(template));
+        config.setTemplates(singleton(template));
 
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setRecipient(Collections.singleton("mailto:" + RECIPIENT));
+        n.setRecipient(singleton("mailto:" + RECIPIENT));
 
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
@@ -225,14 +237,14 @@ public class EmailDispatchImplIT {
             }
         });
 
-        config.setTemplates(Collections.singleton(template));
+        config.setTemplates(singleton(template));
         
         Link link = new Link(URI.create("http://example.org/email/dispatch/myLink"), SUBMISSION_REVIEW_INVITE);
 
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setRecipient(Collections.singleton("mailto:" + RECIPIENT));
+        n.setRecipient(singleton("mailto:" + RECIPIENT));
         n.setParameters(new HashMap<Notification.Param, String>() {
             {
                 put(RESOURCE_METADATA, Composer.resourceMetadata(submission, objectMapper));
@@ -273,7 +285,7 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setRecipient(Collections.singleton("mailto:" + nonExistentRecipientAddress));
+        n.setRecipient(singleton("mailto:" + nonExistentRecipientAddress));
 
         try {
             underTest.dispatch(n);
@@ -298,4 +310,145 @@ public class EmailDispatchImplIT {
         fail("Expected a DispatchException to be thrown.");
     }
 
+    /**
+     * When dispatching a Notification with a non-empty whitelist, only those whitelisted recipients should be present
+     * on the email that is sent
+     */
+    @Test
+    public void testWhitelistFilter() throws Exception {
+        String unlistedRecipient = "mailto:facultyWithNoGrants@jhu.edu";
+        SimpleNotification n = new SimpleNotification();
+        n.setType(SUBMISSION_APPROVAL_INVITE);
+        n.setSender(SENDER);
+        n.setCc(singleton(CC));
+        n.setRecipient(Arrays.asList("mailto:" + RECIPIENT, unlistedRecipient));
+
+        assertTrue(recipientConfig(config).getWhitelist().contains(RECIPIENT));
+        assertFalse(recipientConfig(config).getWhitelist().contains(unlistedRecipient));
+
+        String messageId = underTest.dispatch(n);;
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
+        assertNotNull(message);
+
+        // Only the whitelisted recipient should be present
+        assertEquals(1, message.getRecipients(Message.RecipientType.TO).length);
+        assertEquals(RECIPIENT, message.getRecipients(Message.RecipientType.TO)[0].toString());
+    }
+
+    /**
+     * When composing a Notification, the global CC addresses should not be filtered by the whitelist, while the direct
+     * recipients are.
+     */
+    @Test
+    @DirtiesContext
+    public void testGlobalCCUnaffectedByWhitelist() throws Exception {
+        RecipientConfig recipientConfig = recipientConfig(config);
+
+        // Configure the whitelist such that the submitter's address will
+        // *not* be whitelisted
+        String whitelistEmail = RECIPIENT;
+        recipientConfig.setWhitelist(singleton(whitelistEmail));
+        underTest.getComposer().setWhitelist(new SimpleWhitelist(recipientConfig));
+
+        assertTrue(recipientConfig(config).getWhitelist().contains(RECIPIENT));
+        assertFalse(recipientConfig(config).getWhitelist().contains("facultyWithNoGrants@jhu.edu"));
+
+        SimpleNotification n = new SimpleNotification();
+        n.setType(SUBMISSION_APPROVAL_INVITE);
+        n.setSender(SENDER);
+        n.setRecipient(Arrays.asList("mailto:facultyWithNoGrants@jhu.edu", "mailto:" + whitelistEmail));
+        n.setCc(singleton(GLOBAL_DEMO_CC_ADDRESS));
+
+        String messageId = underTest.dispatch(n);
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
+        assertNotNull(message);
+
+        // The recipient list doesn't contain facultyWithNoGrants@jhu.edu because it isn't whitelisted
+        assertEquals(1, message.getRecipients(Message.RecipientType.TO).length);
+        assertEquals(whitelistEmail, message.getRecipients(Message.RecipientType.TO)[0].toString());
+
+        // The cc list does contain the expected address, because the global cc is not filtered through the whitelist at all
+        assertEquals(1, message.getRecipients(Message.RecipientType.CC).length);
+        assertEquals(GLOBAL_DEMO_CC_ADDRESS, message.getRecipients(Message.RecipientType.CC)[0].toString());
+    }
+
+    /**
+     * Insure that the proper whitelist is used for the specified mode
+     */
+    @Test
+    @DirtiesContext
+    public void testRecipientConfigForEachMode() {
+        // make a unique whitelist and recipient config for each possible mode
+        HashMap<Mode, RecipientConfig> rcs = new HashMap<>();
+        Arrays.stream(Mode.values()).forEach(m -> {
+            RecipientConfig rc = new RecipientConfig();
+            rc.setMode(m);
+            rc.setWhitelist(new ArrayList<>(1));
+            rcs.put(m, rc);
+        });
+
+        config.setRecipientConfigs(rcs.values());
+
+        Arrays.stream(Mode.values()).forEach(mode -> {
+            config.setMode(mode);
+            assertEquals(mode, recipientConfig(config).getMode());
+        });
+    }
+
+    /**
+     * When composing a Notification with an empty whitelist, every recipient should be present.
+     */
+    @Test
+    @DirtiesContext
+    public void testEmptyWhitelist() throws Exception {
+        RecipientConfig recipientConfig = recipientConfig(config);
+        recipientConfig.setWhitelist(Collections.emptyList());
+        underTest.getComposer().setWhitelist(new SimpleWhitelist(recipientConfig));
+
+        String secondRecipient = "facultyWithNoGrants@jhu.edu";
+        SimpleNotification n = new SimpleNotification();
+        n.setType(SUBMISSION_APPROVAL_INVITE);
+        n.setSender(SENDER);
+        n.setCc(Arrays.asList(CC, GLOBAL_DEMO_CC_ADDRESS));
+        n.setRecipient(Arrays.asList("mailto:" + RECIPIENT, "mailto:" + secondRecipient));
+
+        String messageId = underTest.dispatch(n);
+
+        Condition.newMessageCondition(messageId, imapClient).await();
+        Message message = Condition.getMessage(messageId, imapClient).call();
+        assertNotNull(message);
+
+        Collection<String> actualRecipients = Arrays.stream(message.getAllRecipients()).map(Object::toString).collect(Collectors.toSet());
+
+        assertTrue(actualRecipients.contains(RECIPIENT));
+        assertTrue(actualRecipients.contains(secondRecipient));
+        assertTrue(actualRecipients.contains(CC));
+        assertTrue(actualRecipients.contains(GLOBAL_DEMO_CC_ADDRESS));
+        assertEquals(4, actualRecipients.size());
+
+        imapClientFactory.setImapUser(secondRecipient);
+        SimpleImapClient facultyClient = imapClientFactory.getObject();
+
+        Condition.newMessageCondition(messageId, facultyClient).await();
+        message = Condition.getMessage(messageId, facultyClient).call();
+        assertNotNull(message);
+
+        actualRecipients = Arrays.stream(message.getAllRecipients()).map(Object::toString).collect(Collectors.toSet());
+
+        assertTrue(actualRecipients.contains(RECIPIENT));
+        assertTrue(actualRecipients.contains(secondRecipient));
+        assertTrue(actualRecipients.contains(CC));
+        assertTrue(actualRecipients.contains(GLOBAL_DEMO_CC_ADDRESS));
+        assertEquals(4, actualRecipients.size());
+    }
+
+    private static RecipientConfig recipientConfig(NotificationConfig config) {
+        return config.getRecipientConfigs()
+                .stream()
+                .filter(rc -> rc.getMode() == config.getMode())
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("Missing RecipientConfig for mode '" + config.getMode() + "'"));
+    }
 }

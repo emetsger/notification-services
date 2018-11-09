@@ -16,6 +16,7 @@
 package org.dataconservancy.pass.notification.dispatch.impl.email;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.config.template.NotificationTemplate;
@@ -27,10 +28,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.dataconservancy.pass.notification.dispatch.impl.email.RecipientParser.parseRecipientUris;
+import static java.lang.String.join;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -41,28 +46,59 @@ public class EmailComposer {
 
     private PassClient passClient;
 
+    private Function<Collection<String>, Collection<String>> whitelist;
+
     @Autowired
-    public EmailComposer(PassClient passClient) {
+    public EmailComposer(PassClient passClient, Function<Collection<String>, Collection<String>> whitelist) {
         this.passClient = passClient;
+        this.whitelist = whitelist;
     }
 
     Email compose(Notification n, Map<NotificationTemplate.Name, String> templates) {
-        String emailToAddress = String.join(",", parseRecipientUris(n.getRecipients()
-                .stream().map(URI::create).collect(Collectors.toSet()), passClient));
-
         if (n.getSender() == null || n.getSender().trim().length() == 0) {
             throw new DispatchException("Notification must not have a null or empty sender!", n);
         }
+
+        // Resolve the Notification Recipient URIs to email addresses, then apply the whitelist of email addresses
+
+        Set<URI> recipientUris = n.getRecipients()
+                .stream().map(URI::create).collect(Collectors.toSet());
+
+
+        LOG.debug("Initial recipients: [{}]", join(",", recipientUris.stream().map(URI::toString).collect(Collectors.toSet())));
+
+        Collection<String> resolvedRecipients = recipientUris
+                .stream()
+                .map(uri -> {
+                    if (uri.getScheme() != null && uri.getScheme().startsWith("http")) {
+                        User user = passClient.readResource(uri, User.class);
+                        return user.getEmail();
+                    }
+
+                    return uri.getSchemeSpecificPart();
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        LOG.debug("Applying whitelist to resolved recipients: [{}]", join(",", resolvedRecipients));
+
+        Collection<String> whitelistedRecipients = whitelist.apply(resolvedRecipients);
+
+        LOG.info("Whitelisted recipients: [{}]", join(", ", whitelistedRecipients));
+
+        String emailToAddress = join(",", whitelistedRecipients);
 
         if (emailToAddress == null || emailToAddress.trim().length() == 0) {
             throw new DispatchException("Notification must not have a null or empty to address!", n);
         }
 
+        // Build the email
+
         EmailPopulatingBuilder builder = EmailBuilder.startingBlank()
                 .from(n.getSender())
                 .to(emailToAddress)
                 .withSubject(templates.getOrDefault(NotificationTemplate.Name.SUBJECT, ""))
-                .withPlainText(String.join("\n\n",
+                .withPlainText(join("\n\n",
                         templates.getOrDefault(NotificationTemplate.Name.BODY, ""),
                         templates.getOrDefault(NotificationTemplate.Name.FOOTER, "")));
 
@@ -82,4 +118,7 @@ public class EmailComposer {
         return builder.buildEmail();
     }
 
+    void setWhitelist(Function<Collection<String>, Collection<String>> whitelist) {
+        this.whitelist = whitelist;
+    }
 }

@@ -36,7 +36,7 @@ import org.dataconservancy.pass.notification.impl.Composer;
 import org.dataconservancy.pass.notification.impl.DefaultNotificationService;
 import org.dataconservancy.pass.notification.impl.LinkValidator;
 import org.dataconservancy.pass.notification.impl.RecipientAnalyzer;
-import org.dataconservancy.pass.notification.impl.SimpleWhitelist;
+import org.dataconservancy.pass.notification.dispatch.impl.email.SimpleWhitelist;
 import org.dataconservancy.pass.notification.impl.SubmissionLinkAnalyzer;
 import org.dataconservancy.pass.notification.impl.UserTokenGenerator;
 import org.dataconservancy.pass.notification.model.config.Mode;
@@ -157,8 +157,8 @@ public class SpringBootNotificationConfig {
     }
 
     @Bean
-    public EmailComposer emailComposer(PassClient passClient) {
-        return new EmailComposer(passClient);
+    public EmailComposer emailComposer(PassClient passClient, SimpleWhitelist whitelist) {
+        return new EmailComposer(passClient, whitelist);
     }
 
     @Bean
@@ -229,7 +229,7 @@ public class SpringBootNotificationConfig {
 
     @Bean
     public RecipientAnalyzer recipientAnalyzer(Function<Collection<String>, Collection<String>> simpleWhitelist) {
-        return new RecipientAnalyzer(simpleWhitelist);
+        return new RecipientAnalyzer();
     }
    
     @Bean

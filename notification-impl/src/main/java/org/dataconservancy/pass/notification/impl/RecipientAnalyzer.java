@@ -25,10 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toSet;
@@ -42,13 +40,6 @@ public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent
 
     private static final Logger LOG = LoggerFactory.getLogger(RecipientAnalyzer.class);
 
-    private Function<Collection<String>, Collection<String>> whitelist;
-
-    public RecipientAnalyzer(Function<Collection<String>, Collection<String>> whitelist) {
-        Objects.requireNonNull(whitelist, "Whitelist must not be null!");
-        this.whitelist = whitelist;
-    }
-
     @Override
     public Collection<String> apply(Submission submission, SubmissionEvent event) {
         switch (event.getEventType()) {
@@ -61,14 +52,14 @@ public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent
                                 .orElseThrow(() ->
                                         new RuntimeException(
                                                 "Submitter URI and email are null for " + submission.getId())));
-                return whitelist.apply(singleton(submitterUriOrEmail));
+                return singleton(submitterUriOrEmail);
             }
 
             case CHANGES_REQUESTED:
             case SUBMITTED:
             {
                 // to: submission.preparers
-                return whitelist.apply(submission.getPreparers().stream().map(URI::toString).collect(toSet()));
+                return submission.getPreparers().stream().map(URI::toString).collect(toSet());
             }
 
             case CANCELLED: {
@@ -76,10 +67,10 @@ public class RecipientAnalyzer implements BiFunction<Submission, SubmissionEvent
                 Collection<String> recipients;
                 if (submission.getSubmitter().toString().equals(performedBy)) {
                     recipients =
-                            whitelist.apply(submission.getPreparers().stream().map(URI::toString).collect(toSet()));
+                            submission.getPreparers().stream().map(URI::toString).collect(toSet());
                 } else {
                     recipients =
-                            whitelist.apply(singleton(submission.getSubmitter().toString()));
+                            singleton(submission.getSubmitter().toString());
                 }
 
                 return recipients;

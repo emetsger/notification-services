@@ -110,7 +110,7 @@ public class ComposerTest {
         LinkValidator linkValidator = mock(LinkValidator.class);
         when(linkValidator.test(any())).thenReturn(true);
 
-        underTest = new Composer(notificationConfig, new RecipientAnalyzer(whitelister), submissionLinkAnalyzer, linkValidator, mapper);
+        underTest = new Composer(notificationConfig, new RecipientAnalyzer(), submissionLinkAnalyzer, linkValidator, mapper);
     }
 
     /**

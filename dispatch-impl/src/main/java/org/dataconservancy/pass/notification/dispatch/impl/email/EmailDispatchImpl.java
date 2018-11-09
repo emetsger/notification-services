@@ -31,10 +31,20 @@ import java.util.Map;
  * Dispatches {@link Notification}s as email messages.  Email templates are configured by {@link NotificationTemplate}s
  * obtained from the {@link NotificationConfig}, and processed using a {@link TemplateParameterizer}.
  * <p>
- * This implementation expects notification recipients to be encoded as URIs.  Email addresses can be encoded
- * as {@code mailto} URIs, and PASS {@code User} resources encoded as Fedora repository URIs.  {@code mailto}
- * URIs will be parsed for an email address and optionally a name enclosed with &lt; and &gt;.  PASS {@code User} URIs
- * will be de-referenced and the {@code "email"} property used as the recipient email address.
+ * Notification recipients are expected to be encoded as URIs.  Email addresses can be encoded as {@code mailto} URIs,
+ * and PASS {@code User} resources encoded as Fedora repository URIs.  {@code mailto} URIs will be parsed for an email
+ * address and optionally a name enclosed with &lt; and &gt;.  PASS {@code User} URIs will be de-referenced and the
+ * {@code "email"} property used as the recipient email address.
+ * </p>
+ * <p>
+ * After recipient URIs are resolved to email addresses, the whitelist of email addresses is applied.  If no whitelist
+ * is present, or if the whitelist is empty, all recipients are whitelisted.  If the whitelist is not empty, the
+ * recipients of the notification are filtered, and only the whitelisted addresses will receive an email.
+ * </p>
+ * <p>
+ * If a notification addresses multiple recipients in the {@code TO} field of a {@code Notification}, this
+ * implementation does <em>not</em> send individual emails to each recipient.  It will send a single email, with both
+ * recipients listed in the {@code TO} field of the email.
  * </p>
  *
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -80,7 +90,17 @@ public class EmailDispatchImpl implements DispatchService {
         } catch (Exception e) {
             throw new DispatchException(e.getMessage(), e, notification);
         }
-
     }
 
+    Parameterizer getParameterizer() {
+        return parameterizer;
+    }
+
+    Mailer getMailer() {
+        return mailer;
+    }
+
+    EmailComposer getComposer() {
+        return composer;
+    }
 }

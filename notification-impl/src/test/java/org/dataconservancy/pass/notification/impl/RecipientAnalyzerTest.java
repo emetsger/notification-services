@@ -22,7 +22,6 @@ import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -30,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
@@ -39,7 +37,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,22 +55,16 @@ public class RecipientAnalyzerTest {
 
     private SubmissionEvent event;
 
-    private Function<Collection<String>, Collection<String>> whitelist;
-
     private RecipientAnalyzer underTest;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        // Mock a whitelist that will accept any recipient provided to it
-        whitelist = mock(Function.class);
-        when(whitelist.apply(any())).thenAnswer(inv -> inv.getArgument(0));
-
         submission = mock(Submission.class);
 
         event = mock(SubmissionEvent.class);
 
-        underTest = new RecipientAnalyzer(whitelist);
+        underTest = new RecipientAnalyzer();
 
         preparers = Arrays.asList(preparer1, preparer2);
 
@@ -194,6 +185,5 @@ public class RecipientAnalyzerTest {
         expectedRecipients.forEach(expectedRecipient -> assertTrue(actualRecipients.contains(expectedRecipient)));
 
         verify(event, atLeastOnce()).getEventType();
-        verify(whitelist).apply(any());
     }
 }

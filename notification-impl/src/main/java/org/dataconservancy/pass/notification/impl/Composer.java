@@ -78,7 +78,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         this.mapper = mapper;
         Objects.requireNonNull(config, "NotificationConfig must not be null.");
         recipientConfig = getRecipientConfig(config);
-        recipientAnalyzer = new RecipientAnalyzer(new SimpleWhitelist(recipientConfig));
+        recipientAnalyzer = new RecipientAnalyzer();
         submissionLinkAnalyzer = new SubmissionLinkAnalyzer(new UserTokenGenerator(config));
         linkValidator = new LinkValidator(config);
     }
