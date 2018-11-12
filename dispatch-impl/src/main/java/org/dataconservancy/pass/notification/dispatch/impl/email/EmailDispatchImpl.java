@@ -25,7 +25,11 @@ import org.simplejavamail.mailer.Mailer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.mail.Message;
+import java.util.Arrays;
 import java.util.Map;
+
+import static java.lang.String.join;
 
 /**
  * Dispatches {@link Notification}s as email messages.  Email templates are configured by {@link NotificationTemplate}s
@@ -80,6 +84,12 @@ public class EmailDispatchImpl implements DispatchService {
 
             Email email = composer.compose(notification, parameterizedTemplates);
 
+            email.getRecipients().stream()
+                    .filter(r -> Message.RecipientType.TO == r.getType())
+                    .findAny()
+                    .orElseThrow(() ->
+                            new DispatchException("Cannot dispatch email with an empty To: address for notification tuple [" + notificationTuple(notification) + "]", notification));
+
             // send email
 
             mailer.sendMail(email);
@@ -87,9 +97,16 @@ public class EmailDispatchImpl implements DispatchService {
             LOG.trace("Dispatched email with id '{}'", email.getId());
 
             return email.getId();
+        } catch (DispatchException e) {
+            throw e;
         } catch (Exception e) {
             throw new DispatchException(e.getMessage(), e, notification);
         }
+    }
+
+    private static String notificationTuple(Notification notification) {
+        return join(",", Arrays.asList(notification.getResourceUri().toString(),
+                notification.getEventUri().toString()));
     }
 
     Parameterizer getParameterizer() {

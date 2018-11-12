@@ -18,6 +18,7 @@ package org.dataconservancy.pass.notification.dispatch.impl.email;
 import org.apache.commons.io.IOUtils;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
+import org.dataconservancy.pass.notification.dispatch.DispatchException;
 import org.dataconservancy.pass.notification.model.Notification;
 import org.dataconservancy.pass.notification.model.Notification.Param;
 import org.dataconservancy.pass.notification.model.config.NotificationConfig;
@@ -36,13 +37,16 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -182,4 +186,33 @@ public class EmailDispatchImplTest {
         assertEquals("A Subject", email.getSubject());
         assertEquals(String.join("\n\n", "A Body", "A Footer"), email.getPlainText());
     }
+
+    /**
+     * A nice DispatchException should be thrown if the To field of the email is missing or empty
+     */
+    @Test
+    public void emptyToAddress() {
+        Notification notification = mock(Notification.class);
+        Parameterizer p = mock(Parameterizer.class);
+        EmailComposer c = mock(EmailComposer.class);
+        Email e = mock(Email.class);
+
+        when(notification.getResourceUri()).thenReturn(URI.create(UUID.randomUUID().toString()));
+        when(notification.getEventUri()).thenReturn(URI.create(UUID.randomUUID().toString()));
+
+        when(p.resolveAndParameterize(any(), any())).thenReturn(Collections.emptyMap());
+        when(c.compose(any(), any())).thenReturn(e);
+        when(e.getRecipients()).thenReturn(Collections.emptyList());
+
+        try {
+            underTest = new EmailDispatchImpl(p, mailer, c);
+            underTest.dispatch(notification);
+            fail("Expected Dispatch Exception");
+        } catch (DispatchException expected) {
+            assertTrue(expected.getMessage().contains("dispatch email with an empty To: address"));
+        }
+
+        verifyZeroInteractions(mailer);
+    }
+
 }
