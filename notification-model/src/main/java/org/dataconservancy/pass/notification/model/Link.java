@@ -89,7 +89,7 @@ public class Link {
          * <p>
          * This is used to link to a Submission in the UI, without an 
          * expectation that any action needs to be taken.
-         * <p> 
+         * </p>
          */
         public static final String SUBMISSION_VIEW = "submission-view";
         
@@ -98,7 +98,7 @@ public class Link {
          * <p>
          * This is used to link to a Submission in the UI, with
          * expectation that some sort of action needs to be taken.
-         * <p> 
+         * </p>
          */
         public static final String SUBMISSION_REVIEW = "submission-review";
         

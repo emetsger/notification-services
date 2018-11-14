@@ -28,9 +28,6 @@ import java.util.Objects;
  * <p>
  * The configuration is parsed from a JSON resource identified by the environment variable or system property {@code pass.notification.configuration}.  The resource must be identified as a Spring Resource URI (e.g. {@code classpath:/notification.json}, {@code file:///notification.json}).
  * </p>
- * <p>
- *
- * </p>
  *
  * @see <a href="https://docs.spring.io/spring/docs/5.1.1.RELEASE/spring-framework-reference/core.html#resources">Spring Resources</a>
  * @author Elliot Metsger (emetsger@jhu.edu)

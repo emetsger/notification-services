@@ -34,9 +34,9 @@ import java.util.Objects;
  * NotificationConfig config = ...;
  * NotificationTemplate approvalRequestedTemplate = config.getTemplates()
  *                                       .stream()
- *                                       .filter(t -> t.getNotificationType() == SUBMISSION_APPROVAL_REQUESTED)
+ *                                       .filter(t -&gt; t.getNotificationType() == SUBMISSION_APPROVAL_REQUESTED)
  *                                       .findAny()
- *                                       .orElseThrow(() -> new RuntimeException("Missing template for " + SUBMISSION_APPROVAL_REQUESTED));
+ *                                       .orElseThrow(() -&gt; new RuntimeException("Missing template for " + SUBMISSION_APPROVAL_REQUESTED));
  *
  * String subjectTemplate = approvalRequestedTemplate.getTemplates().get(SUBJECT);
  * // subjectTemplate can be an inline value:
