@@ -214,7 +214,7 @@ public class SpringBootNotificationConfig {
                 .withDebugLogging(mailerDebug);
 
 
-        if (smtpConfig.getSmtpUser() != null) {
+        if (smtpConfig.getSmtpUser() != null && smtpConfig.getSmtpUser().trim().length() > 0) {
             builder = builder.withSMTPServerUsername(smtpConfig.getSmtpUser())
                     .withSMTPServerPassword(smtpConfig.getSmtpPassword());
         }
