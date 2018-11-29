@@ -30,7 +30,7 @@ Notification Services (NS) emits notifications in the form of email.  Therefore 
 
 ## Notification Recipients
 
-Who _receives_ a notification is a function of the type of `SubmissionEvent` handled by Notification Services (NS).  However, there are ways the recipient list can be manipulated, discussed below.
+The recipient(s) of a notification (e.g. email) is a function of a `{Submission, SubmissionEvent}` tuple.  After the recipient list has been determined, it can be manipulated as discussed below.
 
 ### Whitelist
 
@@ -230,6 +230,33 @@ Highlights of this model are:
 - the `eventUri` references the PASS resource that this notification is responding to
 - the `type` is the type of the `Notification`.  In this case, there is a 1:1 correspondence between the `SubmissionEvent` type and the `Notification` type.
 
+### Notification Types
+
+|Notification Type               |Description
+|--------------------------------|---------------------
+|SUBMISSION_APPROVAL_REQUESTED   |Preparer has requested approval of a Submission by an Authorized Submitter
+|SUBMISSION_APPROVAL_INVITE      |Preparer has requested approval of a Submission by an Authorized Submitter who does not have a User in PASS.
+|SUBMISSION_CHANGES_REQUESTED    |Authorized Submitter has requested changes to the submission by the Preparer.
+|SUBMISSION_SUBMISSION_SUCCESS   |Submission was successfully submitted by the Authorized Submitter
+|SUBMISSION_SUBMISSION_CANCELLED |Submission was cancelled by either the Authorized Submitter or Preparer
+
+### Submission State
+
+The state of the `Submission` vis-a-vis the `SubmissionEvent` (adapted from the [design document](https://docs.google.com/document/d/1k4dWIe-2pOb-E8qf-C0BE7tGDBsEZxGlHAfZ_KaDIGY/edit?usp=sharing)).
+
+![Submission State Model](src/main/resources/submission-state.png)
+
+|What happened to the Submission |SubmissionEvent Type                             |Notification Recipient List
+|--------------------------------|-------------------------------------------------|----------------------------
+|AS Cancelled                    |CANCELLED                                        |Preparer
+|AS Submitted                    |SUBMITTED                                        |Preparer
+|AS Request Changes              |CHANGES_REQUESTED                                |Preparer
+|Preparer Cancelled              |CANCELLED                                        |AS
+|Preparer Request Approval       |APPROVAL_REQUESTED, APPROVAL_REQUESTED_NEWUSER   |AS
+ 
+* AS = Authorized Submitter
+* Preparer = Proxy who has prepared the submitter on behalf of the AS
+
 ### Parameters
 
 The `parameters` map carries simple strings or serialized JSON structures.
@@ -330,3 +357,14 @@ Using Spring Resource URIs to refer to the template location is a more flexible 
 Notification Services supports Mustache templates, specifically implemented using Handlebars.  Each template is injected with the `parameters` map from the `Notification`.  See above for the documented fields of the `parameters` map.  It is beyond the scope of this README to provide guidance on using Mustache or Handlebars, but there are some examples in `pass-docker`, and in the `HandlebarsParameterizerTest`.  Both inline template content and referenced template content (i.e. Spring Resource URIs) can be Mustache templates.
 
 ### Composition
+
+The `EmailComposer` is responsible for adapting the `Notification` to an email.  This includes: 
+* Resolving `Notification` recipient URIs to email addresses
+    * In the case of `mailto` URIs, the scheme specific part is used as the recipient
+    * In the case of `http` or `https` URIs, they are assumed to reference `User` resources in the Fedora repository.  The
+      URIs are de-referenced and the `User.email` is used
+* Applying the email recipient whitelist
+* Creating the email itself, including the email subject and message body, and encoding.
+    * the subject and message body are provided to the `EmailComposer` from the templating engine.
+
+After the `EmailComposer` has created an email, it is returned to the `EmailDispatchImpl` for dispatch via SMTP.
