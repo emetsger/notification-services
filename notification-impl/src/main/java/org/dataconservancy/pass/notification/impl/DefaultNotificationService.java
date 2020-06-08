@@ -58,10 +58,23 @@ public class DefaultNotificationService implements NotificationService {
     public void notify(String eventUri) {
 
         // Retrieve SubmissionEvent
-        SubmissionEvent event = passClient.readResource(URI.create(eventUri), SubmissionEvent.class);
+        SubmissionEvent event = null;
+        try {
+            event = passClient.readResource(URI.create(eventUri), SubmissionEvent.class);
+        } catch (Exception e) {
+            LOG.error("Unable to retrieve SubmissionEvent '{}': {}", eventUri, e);
+            return;
+        }
 
         // Retrieve Submission
-        Submission submission = passClient.readResource(event.getSubmission(), Submission.class);
+        Submission submission = null;
+        try {
+            submission = passClient.readResource(event.getSubmission(), Submission.class);
+        } catch (Exception e) {
+            LOG.error("Unable to retrieve Submission '{}' for SubmissionEvent '{}': {}",
+                    event.getSubmission(), eventUri, e);
+            return;
+        }
 
         // TODO abstract into a policy of some kind
         if ((submission.getPreparers() == null || submission.getPreparers().isEmpty()) ||
