@@ -46,6 +46,10 @@ public class EmailComposer {
 
     private static final Logger NOTIFICATION_LOG = LoggerFactory.getLogger("NOTIFICATION_LOG");
 
+    public static final String SUBMISSION_SMTP_HEADER = "X-PASS-Submission-ID";
+
+    public static final String NOTIFICATION_TYPE_SMTP_HEADER = "X-PASS-Notification-Type";
+
     private PassClient passClient;
 
     private Function<Collection<String>, Collection<String>> whitelist;
@@ -96,14 +100,43 @@ public class EmailComposer {
         }
 
         // Build the email
+        String subject = templates.getOrDefault(NotificationTemplate.Name.SUBJECT, "");
+        String body = templates.getOrDefault(NotificationTemplate.Name.BODY, "");
+        String footer = templates.getOrDefault(NotificationTemplate.Name.FOOTER, "");
+        String from = n.getSender();
+
+        LOG.debug("Building email with the following:\n" +
+                " {}: {}\n" +
+                " {}: {}\n" +
+                " {}: {}\n" +
+                " {}: {}\n" +
+                " {}: {}\n" +
+                " {}: {}\n" +
+                " {}: {}\n",
+                SUBMISSION_SMTP_HEADER, n.getResourceUri(),
+                NOTIFICATION_TYPE_SMTP_HEADER, n.getType().toString(),
+                "From", from,
+                "To", emailToAddress,
+                "Subject", subject,
+                "body text", body,
+                "footer text", footer);
 
         EmailPopulatingBuilder builder = EmailBuilder.startingBlank()
-                .from(n.getSender())
+                .from(from)
                 .to(emailToAddress)
-                .withSubject(templates.getOrDefault(NotificationTemplate.Name.SUBJECT, ""))
+                .withSubject(subject)
                 .withPlainText(join("\n\n",
-                        templates.getOrDefault(NotificationTemplate.Name.BODY, ""),
-                        templates.getOrDefault(NotificationTemplate.Name.FOOTER, "")));
+                        body,
+                        footer));
+
+        // These should never be null in production; being defensive because some tests may not set them
+        if (n.getResourceUri() != null) {
+            builder.withHeader(SUBMISSION_SMTP_HEADER, n.getResourceUri());
+        }
+
+        if (n.getType() != null) {
+            builder.withHeader(NOTIFICATION_TYPE_SMTP_HEADER, n.getType().toString());
+        }
 
         // builder refuses to build the cc with an empty collection
         if (n.getCc() != null && n.getCc().size() > 0) {
