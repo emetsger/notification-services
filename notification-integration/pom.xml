@@ -27,21 +27,6 @@
     <artifactId>notification-integration</artifactId>
     <name>Notification Services Integration</name>
 
-    <profiles>
-        <profile>
-            <id>travis</id>
-            <activation>
-                <property>
-                    <name>env.TRAVIS</name>
-                </property>
-            </activation>
-            <properties>
-                <mail.waitms>30000</mail.waitms>
-                <ldap.waitms>15000</ldap.waitms>
-            </properties>
-        </profile>
-    </profiles>
-
     <build>
 
         <plugins>

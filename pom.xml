@@ -54,6 +54,21 @@
     <profiles>
 
         <profile>
+            <id>travis</id>
+            <activation>
+                <property>
+                    <name>env.TRAVIS</name>
+                </property>
+            </activation>
+            <properties>
+                <mail.waitms>30000</mail.waitms>
+                <ldap.waitms>15000</ldap.waitms>
+                <mail.imap.connectiontimeout>60000</mail.imap.connectiontimeout>
+                <mail.imap.timeout>60000</mail.imap.timeout>
+            </properties>
+        </profile>
+
+        <profile>
             <id>external</id>
             <activation>
                 <property>
