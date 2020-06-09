@@ -281,6 +281,9 @@
                             <pass.notification.smtp.transport>SMTP</pass.notification.smtp.transport>
                             <http.agent>${http.agent}</http.agent>
 
+                            <!-- Used by some ITs -->
+                            <pass.jsonld.context>${pass.jsonld.context}</pass.jsonld.context>
+
                             <!-- IMAP properties for ITs -->
                             <mail.imap.host>${mail.imap.host}</mail.imap.host>
                             <mail.imap.port>${mail.imap.port}</mail.imap.port>
