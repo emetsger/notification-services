@@ -25,3 +25,5 @@ script: mvn clean verify -DtrimStackTrace=false
 
 jdk:
 - oraclejdk8
+
+#bump
