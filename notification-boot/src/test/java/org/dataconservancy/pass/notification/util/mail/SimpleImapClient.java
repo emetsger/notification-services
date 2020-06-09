@@ -26,9 +26,13 @@ import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.search.MessageIDTerm;
+import javax.mail.search.SearchTerm;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,9 +66,10 @@ public class SimpleImapClient implements AutoCloseable {
     /**
      * Searches all Folders in the mail store for messages with the supplied id.
      *
-     * @param messageId
-     * @return
+     * @param messageId the SMTP message id
+     * @return the matching message
      * @throws MessagingException
+     * @throws RuntimeException if the message is not found
      */
     public Message getMessage(String messageId) throws MessagingException {
         // iterate over all folders looking for a matching message
@@ -93,6 +98,44 @@ public class SimpleImapClient implements AutoCloseable {
                 throw new RuntimeException(e);
             }
         }).findAny().orElseThrow(() -> new RuntimeException("Message '" + messageId + "' not found in any folder."));
+    }
+
+    /**
+     * Searches all Folders in the mail store for messages that match the supplied search term.  Note this method does
+     * not throw a RuntimeException if no messages are found.
+     *
+     * @param term the search term
+     * @return the matching messages
+     * @throws MessagingException
+     */
+    public Collection<Message> search(SearchTerm term) throws MessagingException {
+        // iterate over all folders looking for a matching message
+        LOG.trace("Store '{}@{}' isConnected? '{}'",
+                store.getClass().getName(),
+                Integer.toHexString(System.identityHashCode(store)),
+                store.isConnected());
+
+        List<Message> result = getFolders().stream().filter(folder -> folder.getName().length() > 0).flatMap(folder -> {
+            try {
+                LOG.trace("Store '{}@{}' opening folder '{}'",
+                        store.getClass().getName(),
+                        Integer.toHexString(System.identityHashCode(store)),
+                        folder.getName());
+                folder.open(Folder.READ_ONLY);
+                Message[] messages = folder.search(term);
+                if (messages != null && messages.length > 0) {
+                    LOG.trace("Found {} message(s) in folder {}. First message: {}", messages.length, folder.getName(), messages[0]);
+                    // TODO: call folder.close()?
+                    return Arrays.stream(messages);
+                }
+                folder.close();
+                return Stream.empty();
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
+
+        return result;
     }
 
     @Override

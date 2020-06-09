@@ -20,6 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.mail.Message;
+import javax.mail.search.SearchTerm;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -119,14 +122,58 @@ public class Condition<T> {
         this.name = name;
     }
 
-    public static Condition<Message> newMessageCondition(String messageId, SimpleImapClient imapClient) {
-        Condition<Message> c = new Condition<>(getMessage(messageId, imapClient), Objects::nonNull, "New message");
+    /**
+     * Creates a Condition that is satisfied by the presence of a Message for a given SMTP message id.
+     *
+     * Useful for asynchronously waiting for a message to show up in an inbox from the Dispatch API.
+     *
+     * @param messageId the SMTP message id
+     * @param imapClient a fully configured IMAP client
+     * @return the Condition.
+     */
+    public static Condition<Message> newGetMessageCondition(String messageId, SimpleImapClient imapClient) {
+        Condition<Message> c = new Condition<>(getMessage(messageId, imapClient), Objects::nonNull, "Get message");
         c.setTimeoutThresholdMs(10000);
         return c;
     }
 
+    /**
+     * Creates a Condition that is satisfied as soon as one Message matches the supplied search term.
+     *
+     * Useful for asynchronously waiting for a message to show up in an inbox for arbitrary search terms.  For example,
+     * if you don't have the SMTP message ID you can search for messages that contain the PASS Submission ID in the
+     * SMTP headers.
+     *
+     * @param term the IMAP search term
+     * @param imapClient a fully configured IMAP client
+     * @return the Condition.
+     */
+    public static Condition<Collection<Message>> newSearchMessageCondition(SearchTerm term, SimpleImapClient imapClient) {
+        Condition<Collection<Message>> c = new Condition<>(searchMessage(term, imapClient), m -> m.size() > 0, "Search messages");
+        c.setTimeoutThresholdMs(60000);
+        return c;
+    }
+
+    /**
+     * Returns a Callable that will invoke {@link SimpleImapClient#getMessage(String)} with the supplied message id.
+     *
+     * @param messageId the SMTP message ID
+     * @param imapClient a fully configured IMAP client
+     * @return the Callable
+     */
     public static Callable<Message> getMessage(String messageId, SimpleImapClient imapClient) {
         return () -> imapClient.getMessage(messageId);
+    }
+
+    /**
+     * Returns a Callable that will invoke {@link SimpleImapClient#search(SearchTerm)} with the supplied term.
+     *
+     * @param term the IMAP search term
+     * @param imapClient a fully configured IMAP client
+     * @return the Callable
+     */
+    public static Callable<Collection<Message>> searchMessage(SearchTerm term, SimpleImapClient imapClient) {
+        return () -> imapClient.search(term);
     }
 
     /**

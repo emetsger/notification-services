@@ -48,6 +48,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.mail.Message;
+import javax.mail.search.SearchTerm;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,6 +94,12 @@ public class EmailDispatchImplIT {
 
     private static final String GLOBAL_DEMO_CC_ADDRESS = "notification-demo-cc@jhu.edu";
 
+    private static final URI SUBMISSION_RESOURCE_URI =
+            URI.create("http://pass.example.com/fcrepo/rest/submissions/abc/123");
+
+    private static final URI EVENT_RESOURCE_URI =
+            URI.create("http://pass.example.com/fcrepo/rest/submissionEvents/xyz/890");
+
     @Autowired
     private EmailDispatchImpl underTest;
 
@@ -134,11 +141,13 @@ public class EmailDispatchImplIT {
         n.setSender(SENDER);
         n.setCc(singleton(CC));
         n.setRecipient(singleton("mailto:" + RECIPIENT));
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
 
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
 
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
@@ -162,10 +171,12 @@ public class EmailDispatchImplIT {
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
         n.setRecipient(singleton(recipientUri.toString()));
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
 
         String messageId = underTest.dispatch(n);
 
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
 
         assertEquals(RECIPIENT, message.getRecipients(Message.RecipientType.TO)[0].toString());
@@ -199,12 +210,14 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
         n.setRecipient(singleton("mailto:" + RECIPIENT));
 
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
 
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
@@ -216,6 +229,7 @@ public class EmailDispatchImplIT {
     public void subjectTemplateParameterization() throws Exception {
         Submission submission = new Submission();
         submission.setMetadata(resourceToString("/" + packageAsPath(ComposerIT.class) + "/submission-metadata.json", forName("UTF-8")));
+        submission.setId(SUBMISSION_RESOURCE_URI);
 
         SubmissionEvent event = new SubmissionEvent();
         event.setId(URI.create("http://example.org/event/1"));
@@ -224,6 +238,7 @@ public class EmailDispatchImplIT {
         event.setComment("How does this submission look?");
         event.setEventType(SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
         event.setPerformedDate(DateTime.now());
+        event.setSubmission(SUBMISSION_RESOURCE_URI);
 
         // Override the NotificationTemplate for approval invites, including a template that
         // requires parameterization
@@ -249,6 +264,8 @@ public class EmailDispatchImplIT {
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
         n.setRecipient(singleton("mailto:" + RECIPIENT));
+        n.setEventUri(event.getId());
+        n.setResourceUri(submission.getId());
         n.setParameters(new HashMap<Notification.Param, String>() {
             {
                 put(RESOURCE_METADATA, Composer.resourceMetadata(submission, objectMapper));
@@ -262,7 +279,7 @@ public class EmailDispatchImplIT {
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
 
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
@@ -289,6 +306,8 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
         n.setRecipient(singleton("mailto:" + nonExistentRecipientAddress));
 
         try {
@@ -324,6 +343,8 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
         n.setCc(singleton(CC));
         n.setRecipient(Arrays.asList("mailto:" + RECIPIENT, unlistedRecipient));
 
@@ -331,7 +352,7 @@ public class EmailDispatchImplIT {
         assertFalse(recipientConfig(config).getWhitelist().contains(unlistedRecipient));
 
         String messageId = underTest.dispatch(n);;
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
@@ -361,11 +382,13 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
         n.setRecipient(Arrays.asList("mailto:facultyWithNoGrants@jhu.edu", "mailto:" + whitelistEmail));
         n.setCc(singleton(GLOBAL_DEMO_CC_ADDRESS));
 
         String messageId = underTest.dispatch(n);
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
@@ -415,12 +438,14 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
+        n.setResourceUri(SUBMISSION_RESOURCE_URI);
+        n.setEventUri(EVENT_RESOURCE_URI);
         n.setCc(Arrays.asList(CC, GLOBAL_DEMO_CC_ADDRESS));
         n.setRecipient(Arrays.asList("mailto:" + RECIPIENT, "mailto:" + secondRecipient));
 
         String messageId = underTest.dispatch(n);
 
-        Condition.newMessageCondition(messageId, imapClient).await();
+        Condition.newGetMessageCondition(messageId, imapClient).await();
         Message message = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(message);
 
@@ -435,7 +460,7 @@ public class EmailDispatchImplIT {
         imapClientFactory.setImapUser(secondRecipient);
         Message secondMessage;
         try (SimpleImapClient facultyClient = imapClientFactory.getObject()) {
-            Condition.newMessageCondition(messageId, facultyClient).await();
+            Condition.newGetMessageCondition(messageId, facultyClient).await();
             secondMessage = Condition.getMessage(messageId, facultyClient).call();
             assertNotNull(secondMessage);
             actualRecipients = Arrays.stream(secondMessage.getAllRecipients()).map(Object::toString).collect(Collectors.toSet());
