@@ -23,52 +23,69 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientDefault;
-import org.dataconservancy.pass.client.PassJsonAdapter;
-import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
-import org.dataconservancy.pass.model.Repository;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.model.User;
+import org.dataconservancy.pass.notification.dispatch.impl.email.EmailComposer;
 import org.dataconservancy.pass.notification.impl.ComposerIT;
 import org.dataconservancy.pass.notification.model.Link;
 import org.dataconservancy.pass.notification.util.PathUtil;
+import org.dataconservancy.pass.notification.util.async.Condition;
+import org.dataconservancy.pass.notification.util.mail.SimpleImapClient;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
+import javax.mail.Message;
+import javax.mail.search.HeaderTerm;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 
 import static java.nio.charset.Charset.forName;
 import static org.apache.commons.io.IOUtils.resourceToString;
+import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW;
 import static org.dataconservancy.pass.notification.model.Link.Rels.SUBMISSION_REVIEW_INVITE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
+ * Treats Notification Services as a black box by introspecting the side affects of creating submissions that require
+ * notifications to be sent.
+ *
+ * Resources representing a Submission and associated resources (e.g. SubmissionEvent, Users) are put into Fedora, and
+ * a notification is triggered by the creation of a SubmissionEvent.  The side affects are studied by retrieving the
+ * expected notifications (emails) from the IMAP server and making assertions about their content.
+ *
+ * Spring is not available, so any configuration of collaborators needs to happen in a manual fashion.
+ *
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 public class NotificationSmokeIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(NotificationSmokeIT.class);
 
-    private static final String SENDER = "staffWithGrants@jhu.edu";
+    private static final String SENDER = "noreply@pass.jh.edu";
 
     private static final String RECIPIENT = "staffWithNoGrants@jhu.edu";
 
-    private static final String CC = "facultyWithGrants@jhu.edu";
+    private static final String CC = "notification-demo-cc@jhu.edu";
 
     private PassClient passClient;
 
     private OkHttpClient httpClient;
 
     private String contextUri;
+
+    private SimpleImapClientFactory imapClientFactory;
+
+    private SimpleImapClient imapClient;
 
     @Before
     public void setUp() throws Exception {
@@ -89,7 +106,19 @@ public class NotificationSmokeIT {
 
         httpClient = builder.build();
 
-        contextUri = System.getProperty("pass.jsonld.context", "https://oa-pass.github.io/pass-data-model/src/main/resources/context-3.4.jsonld");
+        contextUri = System.getProperty("pass.jsonld.context",
+                "https://oa-pass.github.io/pass-data-model/src/main/resources/context-3.4.jsonld");
+
+        MailUtil mailUtil = new MailUtil();
+        imapClientFactory = new SimpleImapClientFactory(mailUtil.mailSession());
+        imapClientFactory.setImapUser(mailUtil.getImapUser());
+        imapClientFactory.setImapPass(mailUtil.getImapPass());
+        imapClient = imapClientFactory.getObject();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        imapClient.close();
     }
 
     /**
@@ -97,10 +126,17 @@ public class NotificationSmokeIT {
      * the pass client used with notification services.  The Submission and its associated resources are populated using
      * OkHttpClient instead of the PassClient in order to insure resources are created with the specified context uri.
      *
+     * No user token should be present in the body of the email as the event is not an invite- the users all exist in
+     * PASS.
+     *
      * The creation of the SubmissionEvent in Fedora should kick off the notification process.
+     *
+     * A search of the IMAP inbox using the Submission URI should find one Message that matches the expected
+     * notification.
      */
     @Test
-    public void readContext34submissionResource() throws IOException, InterruptedException {
+    public void readContext34submissionResource() throws Exception {
+        LOG.info("Using JSON-LD context uri {} when creating resources.", contextUri);
         String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl", "http://localhost:8080/fcrepo/rest");
 
         // Repositories JSON
@@ -165,13 +201,15 @@ public class NotificationSmokeIT {
         String journalUri = createResource(fedoraBaseUrl, "journals", journal);
 
         // Publication JSON
+        String title = "The Urgency and Challenge of Opening K-12 Schools in the Fall of 2020";
+
         String publication = "" +
                 "{\n" +
                 "  \"@id\" : \"\",\n" +
                 "  \"@type\" : \"Publication\",\n" +
                 "  \"doi\" : \"10.1001/jama.2020.10175\",\n" +
                 "  \"journal\" : \"" + journalUri + "\",\n" +
-                "  \"title\" : \"The Urgency and Challenge of Opening K-12 Schools in the Fall of 2020\",\n" +
+                "  \"title\" : \"" + title + "\",\n" +
                 "  \"@context\" : \"" + contextUri + "\"\n" +
                 "}";
         // Create the resource in Fedora
@@ -185,7 +223,7 @@ public class NotificationSmokeIT {
                 "  \"displayName\" : \"Josh Sharfstein\",\n" +
                 // Must use a whitelisted address for integration tests, otherwise random people may receive emails.
 //                "  \"email\" : \"jsharfs1@johnshopkins.edu\",\n" +
-                "  \"email\" : \"staffWithGrants@jhu.edu\",\n" +
+                "  \"email\" : \"" + RECIPIENT + "\",\n" +
                 "  \"firstName\" : \"Josh\",\n" +
                 "  \"lastName\" : \"Sharfstein\",\n" +
                 "  \"locatorIds\" : [ \"johnshopkins.edu:jhed:jsharfs1\", \"johnshopkins.edu:employeeid:00071462\", \"johnshopkins.edu:hopkinsid:53KS2I\" ],\n" +
@@ -203,7 +241,7 @@ public class NotificationSmokeIT {
                 "  \"@type\" : \"Submission\",\n" +
                 "  \"aggregatedDepositStatus\" : \"not-started\",\n" +
                 "  \"effectivePolicies\" : [ \"" + policyUri + "\" ],\n" +
-                "  \"metadata\" : \"{\\\"hints\\\":{\\\"collection-tags\\\":[\\\"covid\\\"]},\\\"publisher\\\":\\\"American Medical Association (AMA)\\\",\\\"title\\\":\\\"The Urgency and Challenge of Opening K-12 Schools in the Fall of 2020\\\",\\\"journal-title\\\":\\\"JAMA\\\",\\\"issns\\\":[{\\\"issn\\\":\\\"0098-7484\\\",\\\"pubType\\\":\\\"Print\\\"},{\\\"issn\\\":\\\"1538-3598\\\",\\\"pubType\\\":\\\"Online\\\"}],\\\"authors\\\":[{\\\"author\\\":\\\"Joshua M. Sharfstein\\\"},{\\\"author\\\":\\\"Christopher C. Morphew\\\"}],\\\"journal-NLMTA-ID\\\":\\\"JAMA\\\",\\\"publicationDate\\\":\\\"2020-6-1\\\",\\\"doi\\\":\\\"10.1001/jama.2020.10175\\\",\\\"$schema\\\":\\\"https://oa-pass.github.com/metadata-schemas/jhu/global.json\\\",\\\"agent_information\\\":{\\\"name\\\":\\\"Chrome\\\",\\\"version\\\":\\\"81\\\"}}\",\n" +
+                "  \"metadata\" : \"{\\\"hints\\\":{\\\"collection-tags\\\":[\\\"covid\\\"]},\\\"publisher\\\":\\\"American Medical Association (AMA)\\\",\\\"title\\\":\\\"" + title + "\\\",\\\"journal-title\\\":\\\"JAMA\\\",\\\"issns\\\":[{\\\"issn\\\":\\\"0098-7484\\\",\\\"pubType\\\":\\\"Print\\\"},{\\\"issn\\\":\\\"1538-3598\\\",\\\"pubType\\\":\\\"Online\\\"}],\\\"authors\\\":[{\\\"author\\\":\\\"Joshua M. Sharfstein\\\"},{\\\"author\\\":\\\"Christopher C. Morphew\\\"}],\\\"journal-NLMTA-ID\\\":\\\"JAMA\\\",\\\"publicationDate\\\":\\\"2020-6-1\\\",\\\"doi\\\":\\\"10.1001/jama.2020.10175\\\",\\\"$schema\\\":\\\"https://oa-pass.github.com/metadata-schemas/jhu/global.json\\\",\\\"agent_information\\\":{\\\"name\\\":\\\"Chrome\\\",\\\"version\\\":\\\"81\\\"}}\",\n" +
                 "  \"preparers\" : [ \"" + preparersUri + "\" ],\n" +
                 "  \"publication\" : \"" + publicationUri + "\",\n" +
                 "  \"repositories\" : [ \"" + repositoriesUri + "\" ],\n" +
@@ -217,48 +255,49 @@ public class NotificationSmokeIT {
         // Create the resource in Fedora
         String submissionUri = createResource(fedoraBaseUrl, "submissions", submission);
 
-        // FIXME: the comment below is incorrect based on event type of APPROVAL_REQUESTED
-        // When this event is processed, the authorized submitter will receive an email notification with a link that
-        // will invite them to use PASS, and link the Submission to their newly created User (created when they login to PASS for the first time)
+
         SubmissionEvent event = new SubmissionEvent();
         event.setSubmission(URI.create(submissionUri));
         event.setPerformerRole(SubmissionEvent.PerformerRole.PREPARER);
         event.setPerformedBy(URI.create(preparersUri));
-        event.setComment("How does this submission look?");
+        String comment = "How does this submission look?";
+        event.setComment(comment);
         event.setEventType(SubmissionEvent.EventType.APPROVAL_REQUESTED);
         event.setPerformedDate(DateTime.now());
-        Link link = new Link(URI.create("https://pass.local/email/dispatch/myLink"), SUBMISSION_REVIEW_INVITE);
+        Link link = new Link(URI.create(submissionUri
+                .replace("http://localhost", "https://pass.local")), SUBMISSION_REVIEW);
         event.setLink(link.getHref());
 
         event = passClient.createAndReadResource(event, SubmissionEvent.class);
+        assertNotNull(event);
 
-        Thread.sleep(60000);
+        HeaderTerm term = new HeaderTerm(EmailComposer.SUBMISSION_SMTP_HEADER, submissionUri);
+        Condition.newSearchMessageCondition(term, imapClient).await();
+        Collection<Message> messages = Condition.searchMessage(term, imapClient).call();
+        assertNotNull(messages);
+        assertEquals(1, messages.size());
+
+        Message message = messages.iterator().next();
+        String body = SimpleImapClient.getBodyAsText(message);
+        assertTrue(message.getSubject().contains(title));
+        assertTrue(message.getSubject().contains("approval"));
+        assertEquals(SENDER, message.getFrom()[0].toString());
+        assertEquals(CC, message.getRecipients(Message.RecipientType.CC)[0].toString());
+        assertEquals(RECIPIENT, message.getRecipients(Message.RecipientType.TO)[0].toString());
+        assertTrue(body.contains(title));
+        assertTrue(body.contains("https://pass.local"));
+        assertFalse(body.contains("?userToken="));
+        assertTrue(body.contains(submissionUri.substring(submissionUri.lastIndexOf("/"))));
+        assertTrue(body.contains(comment));
     }
 
-    private String createResource(String fedoraBaseUrl, String container, String json) throws IOException {
-        String postUrl;
-        if (fedoraBaseUrl.endsWith("/")) {
-            postUrl = fedoraBaseUrl + container;
-        } else {
-            postUrl = fedoraBaseUrl + "/" + container;
-        }
-
-        String resultUri;
-        try (Response res = httpClient.newCall(new Request.Builder()
-                .header("Content-Type", "application/ld+json")
-                .post(RequestBody.create(MediaType.parse("application/ld+json"), json))
-                .url(postUrl)
-                .build()).execute()) {
-            assertTrue(res.isSuccessful());
-            resultUri = res.header("Location");
-            assertNotNull(resultUri);
-        }
-
-        return resultUri;
-    }
-
+    /**
+     * Creates an INVITE event.  The user token should be present in the body.
+     *
+     * @throws Exception
+     */
     @Test
-    public void postNewEvent() throws IOException, InterruptedException {
+    public void postNewEvent() throws Exception {
         // This User prepares the submission on behalf of the Submission.submitter
         // Confusingly, this User has the ability to submit to PASS.  The authorization-related role of
         // User.Role.SUBMITTER should not be confused with the the logical role as a preparer of a submission.
@@ -280,7 +319,7 @@ public class NotificationSmokeIT {
         submission.setPreparers(Collections.singletonList(preparer.getId()));
         submission.setSource(Submission.Source.PASS);
         submission.setSubmitter(null);
-        submission.setSubmitterEmail(URI.create("mailto:" + SENDER));
+        submission.setSubmitterEmail(URI.create("mailto:" + RECIPIENT));
 
         submission = passClient.createAndReadResource(submission, Submission.class);
 
@@ -290,18 +329,44 @@ public class NotificationSmokeIT {
         event.setSubmission(submission.getId());
         event.setPerformerRole(SubmissionEvent.PerformerRole.PREPARER);
         event.setPerformedBy(preparer.getId());
-        event.setComment("How does this submission look?");
+        String comment = "How does this submission look?";
+        event.setComment(comment);
         event.setEventType(SubmissionEvent.EventType.APPROVAL_REQUESTED_NEWUSER);
         event.setPerformedDate(DateTime.now());
-        Link link = new Link(URI.create("https://pass.local/email/dispatch/myLink"), SUBMISSION_REVIEW_INVITE);
+
+        String submissionUri = submission.getId().toString();
+
+        Link link = new Link(URI.create(submissionUri
+                .replace("http://localhost", "https://pass.local")), SUBMISSION_REVIEW_INVITE);
         event.setLink(link.getHref());
 
         event = passClient.createAndReadResource(event, SubmissionEvent.class);
+        assertNotNull(event);
 
-        Thread.sleep(60000);
+        HeaderTerm term = new HeaderTerm(EmailComposer.SUBMISSION_SMTP_HEADER, submissionUri);
+        Condition.newSearchMessageCondition(term, imapClient).await();
+        Collection<Message> messages = Condition.searchMessage(term, imapClient).call();
+        assertNotNull(messages);
+        assertEquals(1, messages.size());
 
+        Message message = messages.iterator().next();
+        String body = SimpleImapClient.getBodyAsText(message);
+        assertTrue(message.getSubject().contains("Specific protein supplementation using soya"));
+        assertTrue(message.getSubject().contains("approval"));
+        assertEquals(SENDER, message.getFrom()[0].toString());
+        assertEquals(CC, message.getRecipients(Message.RecipientType.CC)[0].toString());
+        assertEquals(RECIPIENT, message.getRecipients(Message.RecipientType.TO)[0].toString());
+        assertTrue(body.contains("https://pass.local"));
+        assertTrue(body.contains("?userToken="));
+        assertTrue(body.contains(submissionUri.substring(submissionUri.lastIndexOf("/"))));
+        assertTrue(body.contains(comment));
     }
 
+    /**
+     * Configures a PASS client from <em>system properties only</em>.  Environment variables are not used.
+     *
+     * @return the PASS client
+     */
     private PassClientDefault passClient() {
         assertTrue(System.getProperties().containsKey("pass.fedora.user"));
         assertTrue(System.getProperties().containsKey("pass.fedora.password"));
@@ -311,5 +376,36 @@ public class NotificationSmokeIT {
         assertTrue(System.getProperties().containsKey("http.agent"));
 
         return new PassClientDefault();
+    }
+
+    /**
+     * Creates a resource in Fedora.  The resource must be supplied as a string of compacted JSON-LD.
+     *
+     * @param fedoraBaseUrl the base url of the Fedora REST API
+     * @param container the container to create the resource in
+     * @param json the compacted JSON-LD of the resource
+     * @return the URI of the created resource
+     * @throws IOException
+     */
+    private String createResource(String fedoraBaseUrl, String container, String json) throws IOException {
+        String postUrl;
+        if (fedoraBaseUrl.endsWith("/")) {
+            postUrl = fedoraBaseUrl + container;
+        } else {
+            postUrl = fedoraBaseUrl + "/" + container;
+        }
+
+        String resultUri;
+        try (Response res = httpClient.newCall(new Request.Builder()
+                .header("Content-Type", "application/ld+json")
+                .post(RequestBody.create(MediaType.parse("application/ld+json"), json))
+                .url(postUrl)
+                .build()).execute()) {
+            assertTrue(res.isSuccessful());
+            resultUri = res.header("Location");
+            assertNotNull(resultUri);
+        }
+
+        return resultUri;
     }
 }

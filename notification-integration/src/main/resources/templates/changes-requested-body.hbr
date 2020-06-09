@@ -1,1 +1,5 @@
-Changes Requested Body
+Hello,
+
+A submission you prepared titled "{{#resource_metadata}}{{title}}{{/resource_metadata}}" requires changes{{#event_metadata}}{{#if comment}}: "{{comment}}"{{else}}.{{/if}}{{/event_metadata}}
+
+Please review the submission at the following URL and make any necessary changes {{#each link_metadata}}{{#eq rel "submission-review"}}{{href}}{{else}}{{/eq}}{{/each}}

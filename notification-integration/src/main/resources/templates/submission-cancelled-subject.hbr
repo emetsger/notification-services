@@ -1,1 +1,1 @@
-Submission Cancelled Subject
+PASS Submission cancelled: "{{#resource_metadata}}{{title}}{{/resource_metadata}}"

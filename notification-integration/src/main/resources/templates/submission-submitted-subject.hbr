@@ -1,1 +1,1 @@
-Submission Submitted Subject
+PASS Submission was submitted: "{{#resource_metadata}}{{title}}{{/resource_metadata}}"

@@ -1,1 +1,5 @@
-Submission Submitted Body
+Hello,
+
+The submission titled "{{#resource_metadata}}{{title}}{{/resource_metadata}}" was successfully submitted{{#event_metadata}}{{#if comment}}: "{{comment}}"{{else}}!{{/if}}{{/event_metadata}}
+
+For reference, the completed submission may be viewed at {{#each link_metadata}}{{#eq rel "submission-view"}}{{href}}{{else}}{{/eq}}{{/each}}

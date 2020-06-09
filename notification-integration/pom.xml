@@ -63,6 +63,8 @@
                         <configuration>
                             <useTestClasspath>false</useTestClasspath>
                             <mainClass>org.dataconservancy.pass.notification.NotificationApp</mainClass>
+                            <!-- Adjust this value to see more or less debugging when running ITs -->
+                            <jvmArguments>-Dorg.dataconservancy.pass.notification.level=INFO</jvmArguments>
                             <arguments>
                                 <argument>--pass.fedora.user=${pass.fedora.user}</argument>
                                 <argument>--pass.fedora.password=${pass.fedora.password}</argument>
