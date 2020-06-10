@@ -140,7 +140,7 @@ public class EmailDispatchImplIT {
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
         n.setCc(singleton(CC));
-        n.setRecipient(singleton("mailto:" + RECIPIENT));
+        n.setRecipients(singleton("mailto:" + RECIPIENT));
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
 
@@ -170,7 +170,7 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setRecipient(singleton(recipientUri.toString()));
+        n.setRecipients(singleton(recipientUri.toString()));
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
 
@@ -212,7 +212,7 @@ public class EmailDispatchImplIT {
         n.setSender(SENDER);
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
-        n.setRecipient(singleton("mailto:" + RECIPIENT));
+        n.setRecipients(singleton("mailto:" + RECIPIENT));
 
         String messageId = underTest.dispatch(n);
         assertNotNull(messageId);
@@ -263,7 +263,7 @@ public class EmailDispatchImplIT {
         SimpleNotification n = new SimpleNotification();
         n.setType(SUBMISSION_APPROVAL_INVITE);
         n.setSender(SENDER);
-        n.setRecipient(singleton("mailto:" + RECIPIENT));
+        n.setRecipients(singleton("mailto:" + RECIPIENT));
         n.setEventUri(event.getId());
         n.setResourceUri(submission.getId());
         n.setParameters(new HashMap<Notification.Param, String>() {
@@ -308,7 +308,7 @@ public class EmailDispatchImplIT {
         n.setSender(SENDER);
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
-        n.setRecipient(singleton("mailto:" + nonExistentRecipientAddress));
+        n.setRecipients(singleton("mailto:" + nonExistentRecipientAddress));
 
         try {
             underTest.dispatch(n);
@@ -346,7 +346,7 @@ public class EmailDispatchImplIT {
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
         n.setCc(singleton(CC));
-        n.setRecipient(Arrays.asList("mailto:" + RECIPIENT, unlistedRecipient));
+        n.setRecipients(Arrays.asList("mailto:" + RECIPIENT, unlistedRecipient));
 
         assertTrue(recipientConfig(config).getWhitelist().contains(RECIPIENT));
         assertFalse(recipientConfig(config).getWhitelist().contains(unlistedRecipient));
@@ -384,7 +384,7 @@ public class EmailDispatchImplIT {
         n.setSender(SENDER);
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
-        n.setRecipient(Arrays.asList("mailto:facultyWithNoGrants@jhu.edu", "mailto:" + whitelistEmail));
+        n.setRecipients(Arrays.asList("mailto:facultyWithNoGrants@jhu.edu", "mailto:" + whitelistEmail));
         n.setCc(singleton(GLOBAL_DEMO_CC_ADDRESS));
 
         String messageId = underTest.dispatch(n);
@@ -441,7 +441,7 @@ public class EmailDispatchImplIT {
         n.setResourceUri(SUBMISSION_RESOURCE_URI);
         n.setEventUri(EVENT_RESOURCE_URI);
         n.setCc(Arrays.asList(CC, GLOBAL_DEMO_CC_ADDRESS));
-        n.setRecipient(Arrays.asList("mailto:" + RECIPIENT, "mailto:" + secondRecipient));
+        n.setRecipients(Arrays.asList("mailto:" + RECIPIENT, "mailto:" + secondRecipient));
 
         String messageId = underTest.dispatch(n);
 

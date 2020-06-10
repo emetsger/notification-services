@@ -137,7 +137,7 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
         params.put(Notification.Param.FROM, from);
 
         Collection<String> recipients = recipientAnalyzer.apply(submission, event);
-        notification.setRecipient(recipients);
+        notification.setRecipients(recipients);
         params.put(Notification.Param.TO, join(",", recipients));
         
         params.put(Notification.Param.LINKS, concat(submissionLinkAnalyzer.apply(submission, event))

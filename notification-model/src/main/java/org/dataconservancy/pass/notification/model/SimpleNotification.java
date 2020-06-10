@@ -76,7 +76,7 @@ public class SimpleNotification implements Notification {
         return recipients;
     }
 
-    public void setRecipient(Collection<String> recipients) {
+    public void setRecipients(Collection<String> recipients) {
         this.recipients = recipients;
     }
 
