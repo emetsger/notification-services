@@ -7,6 +7,9 @@
       "global_cc": [
         "notification-demo-cc@jhu.edu"
       ],
+      "global_bcc": [
+        "notification-demo-bcc@jhu.edu"
+      ],
       "whitelist": [
         "emetsger@mail.local.domain",
         "staffWithNoGrants@jhu.edu",

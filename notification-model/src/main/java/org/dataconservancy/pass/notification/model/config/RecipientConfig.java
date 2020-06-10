@@ -18,8 +18,8 @@ package org.dataconservancy.pass.notification.model.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Allows recipients of a notification to be configured depending on the Notification Service {@link #mode mode}.
@@ -37,10 +37,16 @@ public class RecipientConfig {
     private Mode mode;
 
     /**
-     * All notifications for {@link #mode} will be sent to this recipient
+     * All notifications for {@link #mode} will be sent to these recipients
      */
     @JsonProperty("global_cc")
     private Collection<String> globalCc;
+
+    /**
+     * All notifications for {@link #mode} will be blind carbon copied to these recipients
+     */
+    @JsonProperty("global_bcc")
+    private Collection<String> globalBcc;
 
     /**
      * Whitelisted recipients for {@link #mode} will receive notifications directly.  If the recipient on the
@@ -81,7 +87,8 @@ public class RecipientConfig {
     }
 
     /**
-     * All notifications for {@link #mode} will be sent to these recipients
+     * All notifications for {@link #mode} will be sent to these recipients.  Differs from {@link #getGlobalBcc()} as
+     * this method does not blind carbon-copy recipients.
      *
      * @return global recipients for dispatched notifications
      */
@@ -91,6 +98,20 @@ public class RecipientConfig {
 
     public void setGlobalCc(Collection<String> globalCc) {
         this.globalCc = globalCc;
+    }
+
+    /**
+     * All notifications for {@link #mode} will be blind carbon copied to these recipients.  Differs from
+     * {@link #getGlobalCc()} as this method blind carbon-copies recipients.
+     *
+     * @return global, blind, recipients for dispatched notifications
+     */
+    public Collection<String> getGlobalBcc() {
+        return globalBcc;
+    }
+
+    public void setGlobalBcc(Collection<String> globalBcc) {
+        this.globalBcc = globalBcc;
     }
 
     /**
@@ -134,6 +155,17 @@ public class RecipientConfig {
     }
 
     @Override
+    public String toString() {
+        return new StringJoiner("\n  ", RecipientConfig.class.getSimpleName() + "[", "]")
+                .add("mode=" + mode)
+                .add("globalCc=" + globalCc)
+                .add("globalBcc=" + globalBcc)
+                .add("whitelist=" + whitelist)
+                .add("fromAddress='" + fromAddress + "'")
+                .toString();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -142,22 +174,13 @@ public class RecipientConfig {
         RecipientConfig that = (RecipientConfig) o;
         return mode == that.mode &&
                 Objects.equals(globalCc, that.globalCc) &&
+                Objects.equals(globalBcc, that.globalBcc) &&
                 Objects.equals(whitelist, that.whitelist) &&
                 Objects.equals(fromAddress, that.fromAddress);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mode, globalCc, whitelist, fromAddress);
-    }
-
-    @Override
-    public String toString() {
-        return "RecipientConfig{" +
-                "mode=" + mode +
-                ", globalCc=" + globalCc +
-                ", whitelist=" + whitelist +
-                ", fromAddress='" + fromAddress + '\'' +
-                '}';
+        return Objects.hash(mode, globalCc, globalBcc, whitelist, fromAddress);
     }
 }

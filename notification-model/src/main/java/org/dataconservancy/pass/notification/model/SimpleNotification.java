@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Encapsulates {@link Notification} metadata used to dispatch the notification.
@@ -41,6 +42,11 @@ public class SimpleNotification implements Notification {
      * Additional recipients, may be URIs to PASS {@code User}s
      */
     private Collection<String> cc;
+
+    /**
+     * Additional recipients, must be RFC 822 email addresses.  URIs must not be used.
+     */
+    private Collection<String> bcc;
 
     /**
      * The type of {@link Notification}
@@ -79,6 +85,15 @@ public class SimpleNotification implements Notification {
 
     public void setCc(Collection<String> cc) {
         this.cc = cc;
+    }
+
+    @Override
+    public Collection<String> getBcc() {
+        return bcc;
+    }
+
+    public void setBcc(Collection<String> bcc) {
+        this.bcc = bcc;
     }
 
     public Type getType() {
@@ -122,6 +137,20 @@ public class SimpleNotification implements Notification {
     }
 
     @Override
+    public String toString() {
+        return new StringJoiner("\n  ", SimpleNotification.class.getSimpleName() + "[", "]")
+                .add("recipients=" + recipients)
+                .add("sender='" + sender + "'")
+                .add("cc=" + cc)
+                .add("bcc=" + bcc)
+                .add("type=" + type)
+                .add("parameters=" + parameters)
+                .add("eventUri=" + eventUri)
+                .add("resourceUri=" + resourceUri)
+                .toString();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -131,6 +160,7 @@ public class SimpleNotification implements Notification {
         return Objects.equals(recipients, that.recipients) &&
                 Objects.equals(sender, that.sender) &&
                 Objects.equals(cc, that.cc) &&
+                Objects.equals(bcc, that.bcc) &&
                 type == that.type &&
                 Objects.equals(parameters, that.parameters) &&
                 Objects.equals(eventUri, that.eventUri) &&
@@ -139,20 +169,6 @@ public class SimpleNotification implements Notification {
 
     @Override
     public int hashCode() {
-        return Objects.hash(recipients, sender, cc, type, parameters, eventUri, resourceUri);
+        return Objects.hash(recipients, sender, cc, bcc, type, parameters, eventUri, resourceUri);
     }
-
-    @Override
-    public String toString() {
-        return "SimpleNotification{" +
-                "recipients=" + recipients +
-                ", sender='" + sender + '\'' +
-                ", cc=" + cc +
-                ", type=" + type +
-                ", parameters=" + parameters +
-                ", eventUri=" + eventUri +
-                ", resourceUri=" + resourceUri +
-                '}';
-    }
-
 }

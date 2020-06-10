@@ -34,6 +34,10 @@ public class RecipientConfigTest extends AbstractJacksonMappingTest {
             "        \"global_cc\": [\n" +
             "          \"demo@pass.jhu.edu\"\n" +
             "        ],\n" +
+            "        \"global_bcc\": [\n" +
+            "          \"bccdemo1@pass.jhu.edu\",\n" +
+            "          \"bccdemo2@pass.jhu.edu\"\n" +
+            "        ],\n" +
             "        \"whitelist\": [\n" +
             "          \"emetsger@jhu.edu\",\n" +
             "          \"hvu@jhu.edu\",\n" +
@@ -66,9 +70,12 @@ public class RecipientConfigTest extends AbstractJacksonMappingTest {
 //        mapper.writer(SerializationFeature.INDENT_OUTPUT).writeValue(System.err, config);
         assertEquals(Mode.DEMO, config.getMode());
         assertEquals(1, config.getGlobalCc().size());
+        assertEquals(2, config.getGlobalBcc().size());
         assertEquals(4, config.getWhitelist().size());
         assertTrue(config.getGlobalCc().contains("demo@pass.jhu.edu"));
         assertTrue(config.getWhitelist().contains("apb@jhu.edu"));
+        assertTrue(config.getGlobalBcc().contains("bccdemo1@pass.jhu.edu"));
+        assertTrue(config.getGlobalBcc().contains("bccdemo2@pass.jhu.edu"));
         assertRoundTrip(config, RecipientConfig.class);
     }
 

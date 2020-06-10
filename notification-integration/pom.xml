@@ -73,6 +73,7 @@
                                 <argument>--pass.notification.mode=DEMO</argument>
                                 <argument>--pass.notification.demo.from.address=noreply@pass.jh.edu</argument>
                                 <argument>--pass.notification.demo.global.cc.address=notification-demo-cc@jhu.edu</argument>
+                                <argument>--pass.notification.demo.global.bcc.address=notification-demo-bcc@jhu.edu</argument>
                                 <argument>--pass.notification.production.from.address=noreply@pass.jh.edu</argument>
                                 <argument>--pass.notification.production.global.cc.address=notification-prod-cc@jhu.edu</argument>
                                 <argument>--pass.notification.configuration=classpath:/notification.json</argument>

@@ -132,6 +132,8 @@ public interface Notification {
 
     Collection<String> getCc();
 
+    Collection<String> getBcc();
+
     Type getType();
 
     Map<Param, String> getParameters();

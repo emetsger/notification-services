@@ -7,6 +7,9 @@
       "global_cc": [
         "${pass.notification.demo.global.cc.address}"
       ],
+      "global_bcc": [
+        "${pass.notification.demo.global.bcc.address}"
+      ],
       "whitelist": [
         "staffWithGrants@jhu.edu",
         "staffWithNoGrants@jhu.edu"
