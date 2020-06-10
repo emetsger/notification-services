@@ -21,9 +21,11 @@ before_install:
 
 install: mvn -U install -Dspring-boot.stop.skip -Dspring-boot.run.skip -Ddocker.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
-script: mvn clean verify -DtrimStackTrace=false
+script: mvn clean verify -DtrimStackTrace=false -Ddocker.useColor=false
 
 jdk:
 - oraclejdk8
 
-#bump
+after_failure:
+  - docker logs `docker ps -a|grep mailserver |awk '{print $1}'`
+  - docker logs `docker ps -a|grep ldap |awk '{print $1}'`

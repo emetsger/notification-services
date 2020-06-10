@@ -62,10 +62,29 @@
             </activation>
             <properties>
                 <mail.waitms>30000</mail.waitms>
-                <ldap.waitms>15000</ldap.waitms>
-                <mail.imap.connectiontimeout>60000</mail.imap.connectiontimeout>
-                <mail.imap.timeout>60000</mail.imap.timeout>
+                <ldap.waitms>30000</ldap.waitms>
+                <mail.imap.connectiontimeout>120000</mail.imap.connectiontimeout>
+                <mail.imap.timeout>120000</mail.imap.timeout>
             </properties>
+
+            <!-- may be used to debug SSL/TLS on Travis -->
+            <!--build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>mavenfailsafeplugin</artifactId>
+                            <version>${maven.failsafe.plugin.version}</version>
+                            <configuration>
+                                <systemProperties>
+                                    <javax.net.debug>all</javax.net.debug>
+                                </systemProperties>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build-->
+
         </profile>
 
         <profile>
