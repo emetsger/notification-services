@@ -71,6 +71,7 @@ public class SimpleNotification implements Notification {
      */
     private URI resourceUri;
 
+    @Override
     public Collection<String> getRecipients() {
         return recipients;
     }
@@ -79,6 +80,7 @@ public class SimpleNotification implements Notification {
         this.recipients = recipients;
     }
 
+    @Override
     public Collection<String> getCc() {
         return cc;
     }
@@ -96,6 +98,7 @@ public class SimpleNotification implements Notification {
         this.bcc = bcc;
     }
 
+    @Override
     public Type getType() {
         return type;
     }
@@ -104,6 +107,7 @@ public class SimpleNotification implements Notification {
         this.type = type;
     }
 
+    @Override
     public Map<Param, String> getParameters() {
         return parameters;
     }
@@ -112,6 +116,7 @@ public class SimpleNotification implements Notification {
         this.parameters = parameters;
     }
 
+    @Override
     public URI getEventUri() {
         return eventUri;
     }
@@ -120,6 +125,7 @@ public class SimpleNotification implements Notification {
         this.eventUri = eventUri;
     }
 
+    @Override
     public URI getResourceUri() {
         return resourceUri;
     }
@@ -128,6 +134,7 @@ public class SimpleNotification implements Notification {
         this.resourceUri = resourceUri;
     }
 
+    @Override
     public String getSender() {
         return sender;
     }
