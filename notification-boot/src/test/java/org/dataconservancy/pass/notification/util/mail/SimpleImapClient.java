@@ -19,6 +19,7 @@ import com.sun.mail.imap.IMAPStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.mail.Address;
 import javax.mail.BodyPart;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -28,14 +29,16 @@ import javax.mail.Session;
 import javax.mail.search.MessageIDTerm;
 import javax.mail.search.SearchTerm;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.lang.String.join;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
@@ -88,6 +91,23 @@ public class SimpleImapClient implements AutoCloseable {
                         Integer.toHexString(System.identityHashCode(store)),
                         folder.getName());
                 folder.open(Folder.READ_ONLY);
+                LOG.trace("Folder {} contains {} messages", folder.getName(), folder.getMessageCount());
+                if (LOG.isTraceEnabled()) {
+                    Arrays.stream(folder.getMessages()).forEach(msg -> {
+                        try {
+                            LOG.trace("  \n  Message-ID: {}\n  From: {}\n  To: {}\n  CC: {}\n  BCC: {}\n  Received: {}\n",
+                                    join(",", msg.getHeader("Message-ID")),
+                                    csvString(Arrays.stream(msg.getFrom())).orElseGet(() -> "<Not Present>"),
+                                    csvString(Arrays.stream(msg.getRecipients(Message.RecipientType.TO))).orElseGet(() -> "<Not Present>"),
+                                    csvString(Arrays.stream(ofNullable(msg.getRecipients(Message.RecipientType.CC)).orElse(new Address[]{}))).orElseGet(() -> "<Not Present>"),
+                                    csvString(Arrays.stream(ofNullable(msg.getRecipients(Message.RecipientType.BCC)).orElse(new Address[]{}))).orElseGet(() -> "<Not Present>"),
+                                    msg.getReceivedDate().toInstant().toString());
+
+                        } catch (MessagingException e) {
+                            LOG.trace("Unable to list messages in folder: {}", e.getMessage(), e);
+                        }
+                    });
+                }
                 Message[] messages = folder.search(idTerm);
                 if (messages != null && messages.length > 0) {
                     return Arrays.stream(messages);
@@ -121,7 +141,25 @@ public class SimpleImapClient implements AutoCloseable {
                         store.getClass().getName(),
                         Integer.toHexString(System.identityHashCode(store)),
                         folder.getName());
+
                 folder.open(Folder.READ_ONLY);
+                LOG.trace("Folder {} contains {} messages", folder.getName(), folder.getMessageCount());
+                if (LOG.isTraceEnabled()) {
+                    Arrays.stream(folder.getMessages()).forEach(msg -> {
+                        try {
+                            LOG.trace("  \n  Message-ID: {}\n  From: {}\n  To: {}\n  CC: {}\n  BCC: {}\n  Received: {}\n",
+                                    join(",", msg.getHeader("Message-ID")),
+                                    csvString(Arrays.stream(msg.getFrom())).orElseGet(() -> "<Not Present>"),
+                                    csvString(Arrays.stream(msg.getRecipients(Message.RecipientType.TO))).orElseGet(() -> "<Not Present>"),
+                                    csvString(Arrays.stream(ofNullable(msg.getRecipients(Message.RecipientType.CC)).orElse(new Address[]{}))).orElseGet(() -> "<Not Present>"),
+                                    csvString(Arrays.stream(ofNullable(msg.getRecipients(Message.RecipientType.BCC)).orElse(new Address[]{}))).orElseGet(() -> "<Not Present>"),
+                                    msg.getReceivedDate().toInstant().toString());
+                        } catch (MessagingException e) {
+                            LOG.trace("Unable to list messages in folder: {}", e.getMessage(), e);
+                        }
+                    });
+                }
+
                 Message[] messages = folder.search(term);
                 if (messages != null && messages.length > 0) {
                     LOG.trace("Found {} message(s) in folder {}. First message: {}", messages.length, folder.getName(), messages[0]);
@@ -173,6 +211,22 @@ public class SimpleImapClient implements AutoCloseable {
 
     private Set<Folder> getFolders() throws MessagingException {
         return Arrays.stream(store.getDefaultFolder().list()).collect(Collectors.toSet());
+    }
+
+    /**
+     * A configuration with a non-existent "${pass.notification.demo.global.cc.address}" property will
+     * result in a list with one element, an empty string.  Filter out any empty string values before
+     * continuing.
+     *
+     * @param values stream of values, some of which may be the empty string
+     * @return values joined by commas, with any empty values present in {@code values} removed
+     */
+    private static Optional<String> csvString(Stream<Address> values) {
+        String filtered = values
+                .filter(v -> v.toString().length() > 0)
+                .map(Address::toString)
+                .collect(Collectors.joining(","));
+        return Optional.of(filtered);
     }
 
 }
