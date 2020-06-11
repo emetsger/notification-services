@@ -38,9 +38,28 @@ Each configuration mode (discussed above) may have an associated whitelist.  If 
 
 Production should use an empty whitelist (i.e. all potential notification recipients are whitelisted).
 
-### Global Carbon Copy
+### Global Carbon Copy Support
 
 Each configuration mode (discussed above) may specify one or more "global carbon copy" addresses.  These addresses will receive a copy of each email sent by Notification Services (NS).  Global carbon copy addresses are implicitly whitelisted; they do not need to be explicitly configured in a whitelist.
+
+Blind carbon copy is also supported.
+
+Here is an example recipient configuration that specifies a global carbon copy and a global blind carbon copy:
+
+    "recipient-config": [
+        {
+          "mode": "DEMO",
+          "fromAddress": "pass-noreply@jhu.edu",
+          "global_cc": [
+            "pass-support@jhu.edu"
+          ],
+          "global_bcc": [
+            "pass-ops@jhu.edu"
+          ]          
+        }
+    ]
+    
+Multiple email addresses may be specified.
 
 ### Example
 
@@ -260,7 +279,7 @@ The state of the `Submission` vis-a-vis the `SubmissionEvent` (adapted from the 
 ### Parameters
 
 The `parameters` map carries simple strings or serialized JSON structures.
-- `TO`, `CC`, `BCC` (not used), `FROM`, and `SUBJECT` are all simple strings
+- `TO`, `CC`, `BCC`, `FROM`, and `SUBJECT` are all simple strings
 - `RESOURCE_METADATA`, `EVENT_METADATA`, and `LINKS` all contain serialized JSON structures
 - Handlebars, the Mustache-based template engine, can navigate the JSON structures to pull out the desired information for email templates.
 
