@@ -123,6 +123,12 @@ public class Composer implements BiFunction<Submission, SubmissionEvent, Notific
             params.put(Notification.Param.CC, join(",", cc));
         }
 
+        Collection<String> bcc = recipientConfig.getGlobalBcc();
+        if (bcc != null && !bcc.isEmpty()) {
+            notification.setBcc(bcc);
+            params.put(Notification.Param.BCC, join(",", bcc));
+        }
+
         notification.setResourceUri(submission.getId());
         params.put(Notification.Param.RESOURCE_METADATA, resourceMetadata(submission, mapper));
 

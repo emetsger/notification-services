@@ -68,6 +68,8 @@ public class ComposerTest {
 
     private static final List<String> NOTIFICATION_GLOBAL_CC_ADDRESS = Arrays.asList("pass@jhu.edu", "pass-prod-cc@jhu.edu");
 
+    private static final List<String> NOTIFICATION_GLOBAL_BCC_ADDRESS = singletonList("pass-prod-bcc@jhu.edu");
+
     private Composer underTest;
 
     private Function<Collection<String>, Collection<String>> whitelister;
@@ -92,6 +94,7 @@ public class ComposerTest {
         recipientConfig.setMode(runtimeMode);
         recipientConfig.setFromAddress(NOTIFICATION_FROM_ADDRESS);
         recipientConfig.setGlobalCc(NOTIFICATION_GLOBAL_CC_ADDRESS);
+        recipientConfig.setGlobalBcc(NOTIFICATION_GLOBAL_BCC_ADDRESS);
 
         // all recipients are whitelisted
         when(whitelister.apply(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -144,6 +147,7 @@ public class ComposerTest {
         assertEquals(userUri, params.get(Param.TO));
         assertEquals(NOTIFICATION_FROM_ADDRESS, params.get(Param.FROM));
         assertEquals(String.join(",", NOTIFICATION_GLOBAL_CC_ADDRESS), params.get(Param.CC));
+        assertEquals(String.join(",", NOTIFICATION_GLOBAL_BCC_ADDRESS), params.get(Param.BCC));
         assertEquals(RESOURCE_METADATA, params.get(Param.RESOURCE_METADATA));
         assertEquals(Notification.Type.SUBMISSION_APPROVAL_INVITE, notification.getType());
 
@@ -179,6 +183,7 @@ public class ComposerTest {
         assertEquals(userUri, params.get(Param.TO));
         assertEquals(NOTIFICATION_FROM_ADDRESS, params.get(Param.FROM));
         assertEquals(String.join(",", NOTIFICATION_GLOBAL_CC_ADDRESS), params.get(Param.CC));
+        assertEquals(String.join(",", NOTIFICATION_GLOBAL_BCC_ADDRESS), params.get(Param.BCC));
         assertEquals(RESOURCE_METADATA, params.get(Param.RESOURCE_METADATA));
         assertEquals(Notification.Type.SUBMISSION_APPROVAL_REQUESTED, notification.getType());
 
@@ -213,6 +218,7 @@ public class ComposerTest {
         assertEquals(preparersUri, params.get(Param.TO));
         assertEquals(NOTIFICATION_FROM_ADDRESS, params.get(Param.FROM));
         assertEquals(String.join(",", NOTIFICATION_GLOBAL_CC_ADDRESS), params.get(Param.CC));
+        assertEquals(String.join(",", NOTIFICATION_GLOBAL_BCC_ADDRESS), params.get(Param.BCC));
         assertEquals(RESOURCE_METADATA, params.get(Param.RESOURCE_METADATA));
         assertEquals(Notification.Type.SUBMISSION_CHANGES_REQUESTED, notification.getType());
 
@@ -247,6 +253,7 @@ public class ComposerTest {
         assertEquals(preparersUri, params.get(Param.TO));
         assertEquals(NOTIFICATION_FROM_ADDRESS, params.get(Param.FROM));
         assertEquals(String.join(",", NOTIFICATION_GLOBAL_CC_ADDRESS), params.get(Param.CC));
+        assertEquals(String.join(",", NOTIFICATION_GLOBAL_BCC_ADDRESS), params.get(Param.BCC));
         assertEquals(RESOURCE_METADATA, params.get(Param.RESOURCE_METADATA));
         assertEquals(Notification.Type.SUBMISSION_SUBMISSION_SUBMITTED, notification.getType());
 
@@ -284,6 +291,7 @@ public class ComposerTest {
         assertEquals(submitterUri, params.get(Param.TO));
         assertEquals(NOTIFICATION_FROM_ADDRESS, params.get(Param.FROM));
         assertEquals(String.join(",", NOTIFICATION_GLOBAL_CC_ADDRESS), params.get(Param.CC));
+        assertEquals(String.join(",", NOTIFICATION_GLOBAL_BCC_ADDRESS), params.get(Param.BCC));
         assertEquals(RESOURCE_METADATA, params.get(Param.RESOURCE_METADATA));
         assertEquals(Notification.Type.SUBMISSION_SUBMISSION_CANCELLED, notification.getType());
 
@@ -321,6 +329,7 @@ public class ComposerTest {
         assertEquals(preparersUri, params.get(Param.TO));
         assertEquals(NOTIFICATION_FROM_ADDRESS, params.get(Param.FROM));
         assertEquals(String.join(",", NOTIFICATION_GLOBAL_CC_ADDRESS), params.get(Param.CC));
+        assertEquals(String.join(",", NOTIFICATION_GLOBAL_BCC_ADDRESS), params.get(Param.BCC));
         assertEquals(RESOURCE_METADATA, params.get(Param.RESOURCE_METADATA));
         assertEquals(Notification.Type.SUBMISSION_SUBMISSION_CANCELLED, notification.getType());
 
