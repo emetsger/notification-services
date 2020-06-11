@@ -55,9 +55,10 @@ public class LoggingAspect {
 
         Notification n = (Notification) args[0];
 
-        NOTIFICATION_LOG.debug("Dispatching notification to [{}], cc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
+        NOTIFICATION_LOG.debug("Dispatching notification to [{}], cc [{}] bcc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
                 join(",", ofNullable(n.getRecipients()).orElseGet(Collections::emptyList)),
                 join(",", ofNullable(n.getCc()).orElseGet(Collections::emptyList)),
+                join(",", ofNullable(n.getBcc()).orElseGet(Collections::emptyList)),
                 n.getType(),
                 n.getEventUri(),
                 n.getResourceUri());
@@ -72,10 +73,11 @@ public class LoggingAspect {
 
         Notification n = (Notification) args[0];
 
-        NOTIFICATION_LOG.info("Successfully dispatched notification with id {} to [{}], cc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
+        NOTIFICATION_LOG.info("Successfully dispatched notification with id {} to [{}], cc [{}] bcc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
                 id,
                 join(",", ofNullable(n.getRecipients()).orElseGet(Collections::emptyList)),
                 join(",", ofNullable(n.getCc()).orElseGet(Collections::emptyList)),
+                join(",", ofNullable(n.getBcc()).orElseGet(Collections::emptyList)),
                 n.getType(),
                 n.getEventUri(),
                 n.getResourceUri());
@@ -87,9 +89,10 @@ public class LoggingAspect {
         Notification n;
 
         if (ex instanceof DispatchException && (n = ((DispatchException) ex).getNotification()) != null) {
-            NOTIFICATION_LOG.warn("FAILED dispatching notification to [{}], cc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
+            NOTIFICATION_LOG.warn("FAILED dispatching notification to [{}], cc [{}] bcc [{}] (Notification type: {}, Event URI: {}, Resource URI: {})",
                     join(",", ofNullable(n.getRecipients()).orElseGet(Collections::emptyList)),
                     join(",", ofNullable(n.getCc()).orElseGet(Collections::emptyList)),
+                    join(",", ofNullable(n.getBcc()).orElseGet(Collections::emptyList)),
                     n.getType(),
                     n.getEventUri(),
                     n.getResourceUri(),
