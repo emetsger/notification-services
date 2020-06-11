@@ -77,6 +77,8 @@ public class NotificationSmokeIT {
 
     private static final String CC = "notification-demo-cc@jhu.edu";
 
+    private static final String BCC = "notification-demo-bcc@jhu.edu";
+
     private PassClient passClient;
 
     private OkHttpClient httpClient;
@@ -360,6 +362,81 @@ public class NotificationSmokeIT {
         assertTrue(body.contains("?userToken="));
         assertTrue(body.contains(submissionUri.substring(submissionUri.lastIndexOf("/"))));
         assertTrue(body.contains(comment));
+    }
+
+    /**
+     * Verify that the global bcc user receives an email.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void verifyBcc() throws Exception {
+        // Preparer
+        User preparer = new User();
+        preparer.setEmail("staffWithNoGrants@jhu.edu");
+        preparer.setDisplayName("Submission Preparer");
+        preparer.setFirstName("Pre");
+        preparer.setLastName("Parer");
+        preparer.setRoles(Collections.singletonList(User.Role.SUBMITTER));
+        preparer = passClient.createAndReadResource(preparer, User.class);
+
+        // Submitter
+        User submitter = new User();
+        submitter.setEmail("staffWithGrants@jhu.edu");
+        submitter.setDisplayName("Submission Submitter");
+        submitter.setFirstName("Authorized");
+        submitter.setLastName("Submitter");
+        submitter.setRoles(Collections.singletonList(User.Role.SUBMITTER));
+        submitter = passClient.createAndReadResource(submitter, User.class);
+
+
+        // The Submission as prepared by the preparer.
+        Submission submission = new Submission();
+        submission.setMetadata(resourceToString("/" + PathUtil.packageAsPath(ComposerIT.class) + "/submission-metadata.json", forName("UTF-8")));
+        submission.setPreparers(Collections.singletonList(preparer.getId()));
+        submission.setSource(Submission.Source.PASS);
+        submission.setSubmitter(submitter.getId());
+        submission = passClient.createAndReadResource(submission, Submission.class);
+
+        // When this event is processed, the BCC address should receive the email (because the configuration used by this IT has a global BCC address configured)
+        SubmissionEvent event = new SubmissionEvent();
+        event.setSubmission(submission.getId());
+        event.setPerformerRole(SubmissionEvent.PerformerRole.PREPARER);
+        event.setPerformedBy(preparer.getId());
+        String comment = "BCC Test";
+        event.setComment(comment);
+        event.setEventType(SubmissionEvent.EventType.APPROVAL_REQUESTED);
+        event.setPerformedDate(DateTime.now());
+        Link link = new Link(URI.create(submission.getId().toString()
+                .replace("http://localhost", "https://pass.local")), SUBMISSION_REVIEW);
+        event.setLink(link.getHref());
+
+        event = passClient.createAndReadResource(event, SubmissionEvent.class);
+        assertNotNull(event);
+
+        String submissionUri = submission.getId().toString();
+
+        // must use a unique imap client instance for the BCC user (factory state is reset in setup)
+        imapClientFactory.setImapUser(BCC);
+        imapClientFactory.setImapPass("moo");
+        try (SimpleImapClient bccImapClient = imapClientFactory.getObject()) {
+            HeaderTerm term = new HeaderTerm(EmailComposer.SUBMISSION_SMTP_HEADER, submissionUri);
+            Condition.newSearchMessageCondition(term, bccImapClient).await();
+            Collection<Message> messages = Condition.searchMessage(term, bccImapClient).call();
+            assertNotNull(messages);
+            assertEquals(1, messages.size());
+
+
+            Message message = messages.iterator().next();
+            String body = SimpleImapClient.getBodyAsText(message);
+            assertTrue(message.getSubject().contains("Specific protein supplementation using soya"));
+            assertTrue(message.getSubject().contains("approval"));
+            assertEquals(SENDER, message.getFrom()[0].toString());
+            assertEquals("staffWithGrants@jhu.edu", message.getRecipients(Message.RecipientType.TO)[0].toString());
+            assertTrue(body.contains("https://pass.local"));
+            assertTrue(body.contains(submissionUri.substring(submissionUri.lastIndexOf("/"))));
+            assertTrue(body.contains(comment));
+        }
     }
 
     /**
