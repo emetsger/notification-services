@@ -21,8 +21,7 @@ before_install:
 
 install: mvn -U install -Dspring-boot.stop.skip -Dspring-boot.run.skip -Ddocker.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
-script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn deploy
-  -DtrimStackTrace=false; else mvn verify -DtrimStackTrace=false -Ddocker.useColor=false; fi
+script: mvn clean verify -DtrimStackTrace=false -Ddocker.useColor=false
 
 jdk:
 - oraclejdk8
