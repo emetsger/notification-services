@@ -179,7 +179,8 @@ public class EmailDispatchImplIT {
         assertNotNull(messageId);
 
         // Original recipient should have the message
-        Message recipientMsg = imapClient.getMessage(messageId);
+        Condition.newGetMessageCondition(messageId, imapClient).await();
+        Message recipientMsg = Condition.getMessage(messageId, imapClient).call();
         assertNotNull(recipientMsg);
         assertEquals("Approval Invite Subject", recipientMsg.getSubject());
         assertEquals(expectedBody, getBodyAsText(recipientMsg));
