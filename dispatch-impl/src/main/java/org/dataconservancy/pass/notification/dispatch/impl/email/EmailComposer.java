@@ -31,9 +31,11 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.join;
 
@@ -104,8 +106,12 @@ public class EmailComposer {
         String body = templates.getOrDefault(NotificationTemplate.Name.BODY, "");
         String footer = templates.getOrDefault(NotificationTemplate.Name.FOOTER, "");
         String from = n.getSender();
+        Optional<String> cc = buildCc(n);
+        Optional<String> bcc = buildBcc(n);
 
         LOG.debug("Building email with the following:\n" +
+                " {}: {}\n" +
+                " {}: {}\n" +
                 " {}: {}\n" +
                 " {}: {}\n" +
                 " {}: {}\n" +
@@ -117,6 +123,8 @@ public class EmailComposer {
                 NOTIFICATION_TYPE_SMTP_HEADER, n.getType().toString(),
                 "From", from,
                 "To", emailToAddress,
+                "CC", cc.orElse("<CC not specified, will not be included in email>"),
+                "BCC", bcc.orElse("<BCC not specified, will not be included in email>"),
                 "Subject", subject,
                 "body text", body,
                 "footer text", footer);
@@ -138,20 +146,57 @@ public class EmailComposer {
             builder.withHeader(NOTIFICATION_TYPE_SMTP_HEADER, n.getType().toString());
         }
 
-        // builder refuses to build the cc with an empty collection
-        if (n.getCc() != null && n.getCc().size() > 0) {
-            // A configuration with a non-existent "${pass.notification.demo.global.cc.address}" property will
-            // result in a list with one element, an empty string.  Filter out any empty string values before
-            // continuing
-            String filtered = n.getCc().stream()
-                    .filter(ccAddress -> ccAddress.length() > 0)
-                    .collect(Collectors.joining(","));
-            if (filtered.length() > 0) {
-                builder.cc(filtered);
-            }
-        }
+        cc.ifPresent(builder::cc);
+        bcc.ifPresent(builder::bcc);
 
         return builder.buildEmail();
+    }
+
+    /**
+     * Returns a comma-separated string of carbon copy addresses.  Handles the case of a CC configuration property being
+     * present with no value.
+     *
+     * @param n the notification which may or may not contain carbon copy recipients
+     * @return an optional string containing comma separated carbon copy recipients
+     */
+    private Optional<String> buildCc(Notification n) {
+        // builder refuses to build the cc with an empty collection
+        if (n.getCc() != null && n.getCc().size() > 0) {
+            return csvString(n.getCc().stream());
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Returns a comma-separated string of blind carbon copy addresses.  Handles the case of a BCC configuration
+     * property being present with no value.
+     *
+     * @param n the notification which may or may not contain blind carbon copy recipients
+     * @return an optional string containing comma separated blind carbon copy recipients
+     */
+    private Optional<String> buildBcc(Notification n) {
+        // builder refuses to build the bcc with an empty collection
+        if (n.getBcc() != null && n.getBcc().size() > 0) {
+            return csvString(n.getBcc().stream());
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * A configuration with a non-existent "${pass.notification.demo.global.cc.address}" property will
+     * result in a list with one element, an empty string.  Filter out any empty string values before
+     * continuing.
+     *
+     * @param values stream of values, some of which may be the empty string
+     * @return values joined by commas, with any empty values present in {@code values} removed
+     */
+    private static Optional<String> csvString(Stream<String> values) {
+        String filtered = values
+                .filter(v -> v.length() > 0)
+                .collect(Collectors.joining(","));
+        return Optional.of(filtered);
     }
 
     void setWhitelist(Function<Collection<String>, Collection<String>> whitelist) {
