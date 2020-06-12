@@ -18,10 +18,12 @@ before_install:
 - sudo service sshguard stop
 - sudo service ssh stop
 - sudo service rsyslog stop
+- if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then openssl aes-256-cbc -K $encrypted_26b4914456b1_key -iv $encrypted_26b4914456b1_iv -in settings-central.tar.enc -out settings-central.tar -d ; fi
 
 install: mvn -U install -Dspring-boot.stop.skip -Dspring-boot.run.skip -Ddocker.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
-script: mvn clean verify -DtrimStackTrace=false -Ddocker.useColor=false
+script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy
+   -DtrimStackTrace=false; else mvn verify -DtrimStackTrace=false -Ddocker.useColor=false; fi
 
 jdk:
 - oraclejdk8
